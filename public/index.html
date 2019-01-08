@@ -1,142 +1,435 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Example of the Authorization Code flow with Spotify</title>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <style type="text/css">
-      #login, #loggedin {
-        display: none;
-      }
-      .text-overflow {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 500px;
-      }
-    </style>
-  </head>
 
-  <body>
-    <div class="container">
-      <div id="login">
-        <h1>This is an example of the Authorization Code flow</h1>
-        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+<head>
+  <title>Example of the Authorization Code flow with Spotify</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
+  <style type="text/css">
+    #login,
+    #loggedin {
+      display: none;
+    }
+
+    .text-overflow {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 500px;
+    }
+
+    .fa-med{
+      font-size: 2em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="login">
+      <h1>This is an example of the Authorization Code flow</h1>
+      <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+    </div>
+    <div id="loggedin">
+      <div id="user-profile">
       </div>
-      <div id="loggedin">
-        <div id="user-profile">
+      <div id="oauth">
+      </div>
+      <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+      <div class="container">
+        <div class="input-group">
+          <input id="search" type="text" class="form-control" placeholder="Search Song">
+          <span class="input-group-btn">
+              <button id="clear-search-btn" class="btn btn-default" type="button"><i class="fa fa-times"></i></button>
+         </span>
+          <span class="input-group-btn">
+              <button id="search-btn" class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
+          </span>
         </div>
-        <div id="oauth">
+        <div id="search-results">
         </div>
-        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+        <div id="queue-display">
+        </div>
+      </div>
+      <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle" aria-hidden="true"></i></button>
+      <button class="btn btn-default" id="next-song"><i id="next-song-icon" class="fa fa-med fa-step-forward"></i></button>
+      <div id="device-list">
+      </div>
+
+    </div>
+  </div>
+
+  <script id="user-profile-template" type="text/x-handlebars-template">
+    <h1>Logged in as {{display_name}}</h1>
+    <div class="media">
+      <div class="pull-left">
+        <img class="media-object" width="150" src="{{images.0.url}}" />
+      </div>
+      <div class="media-body">
+        <dl class="dl-horizontal">
+          <dt>Display name</dt>
+          <dd class="clearfix">{{display_name}}</dd>
+          <dt>Id</dt>
+          <dd>{{id}}</dd>
+          <dt>Email</dt>
+          <dd>{{email}}</dd>
+          <dt>Spotify URI</dt>
+          <dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
+          <dt>Link</dt>
+          <dd><a href="{{href}}">{{href}}</a></dd>
+          <dt>Profile Image</dt>
+          <dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
+          <dt>Country</dt>
+          <dd>{{country}}</dd>
+        </dl>
       </div>
     </div>
+  </script>
 
-    <script id="user-profile-template" type="text/x-handlebars-template">
-      <h1>Logged in as {{display_name}}</h1>
-      <div class="media">
-        <div class="pull-left">
-          <img class="media-object" width="150" src="{{images.0.url}}" />
-        </div>
-        <div class="media-body">
-          <dl class="dl-horizontal">
-            <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
-            <dt>Id</dt><dd>{{id}}</dd>
-            <dt>Email</dt><dd>{{email}}</dd>
-            <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
-            <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
-            <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
-            <dt>Country</dt><dd>{{country}}</dd>
-          </dl>
-        </div>
-      </div>
-    </script>
+  <script id="device-list-template" type="text/x-handlebars-template">
+    <h3>Available Devices</h3>
+    <ol>
+      {{#each devices}}
+      <li>{{this.name}}</li>
+      {{/each}}
+    </ol>
+  </script>
 
-    <script id="oauth-template" type="text/x-handlebars-template">
-      <h2>oAuth info</h2>
-      <dl class="dl-horizontal">
-        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
-        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}</dd>
-      </dl>
-    </script>
+  <script id="search-results-template" type="text/x-handlebars-template">
+    <div class="container">
+      <ul class="list-group">
+        {{#each items}}
+        <li class="list-group-item clearfix">
+          {{this.name}}
+          <span class="pull-right">
+              <button class="btn btn-xs btn-default" onclick="addSong('{{@index}}')">
+                  <i class="fa fa-plus"></i>
+              </button>
+          </span>
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+  </script>
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-    <script>
-      (function() {
+  <script id="queue-display-template" type="text/x-handlebars-template">
+    <h2>Play Queue</h2>
+    <div class="container">
+        <table class="table table-dark">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Title</th>
+                <th scope="col">Artist</th>
+                <th scope="col">time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each items}}
+              <tr>
+                <th scope="row">{{@index}}</th>
+                <td>{{this.name}}</td>
+                <td>{{this.artists.0.name}}</td>
+                <td>{{this.duration_ms}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+    </div>
+  </script>
 
-        /**
-         * Obtains parameters from the hash of the URL
-         * @return Object
-         */
-        function getHashParams() {
-          var hashParams = {};
-          var e, r = /([^&;=]+)=?([^&;]*)/g,
-              q = window.location.hash.substring(1);
-          while ( e = r.exec(q)) {
-             hashParams[e[1]] = decodeURIComponent(e[2]);
-          }
-          return hashParams;
+  <script id="oauth-template" type="text/x-handlebars-template">
+    <h2>oAuth info</h2>
+    <dl class="dl-horizontal">
+      <dt>Access token</dt>
+      <dd class="text-overflow">{{access_token}}</dd>
+      <dt>Refresh token</dt>
+      <dd class="text-overflow">{{refresh_token}}</dd>
+    </dl>
+  </script>
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script>
+    var params = getHashParams();
+    var devices;
+    var queue = new Array();
+    var qTimer; //timer that says when to play the next song
+    var playState = "NOT_STARTED";
+    var playPauseIcon = document.getElementById('play-pause-icon');
+    var searchResults;
+
+    var userProfileSource, userProfileTemplate, userProfilePlaceholder;
+
+    var oauthSource, oauthTemplate, oauthPlaceholder;
+
+    var deviceListSource, deviceListTemplate, deviceListPlaceholder;
+
+    var searchResultsSource, searchResultsTemplate, searchResultsPlaceholder;
+
+    var queueDisplaySource, queueDisplayTemplate, queueDisplayPlaceholder;
+
+    var access_token, refresh_token, error;
+
+    (function () {
+
+      userProfileSource = document.getElementById('user-profile-template').innerHTML,
+        userProfileTemplate = Handlebars.compile(userProfileSource),
+        userProfilePlaceholder = document.getElementById('user-profile');
+
+      oauthSource = document.getElementById('oauth-template').innerHTML,
+        oauthTemplate = Handlebars.compile(oauthSource),
+        oauthPlaceholder = document.getElementById('oauth');
+
+      deviceListSource = document.getElementById('device-list-template').innerHTML,
+        deviceListTemplate = Handlebars.compile(deviceListSource),
+        deviceListPlaceholder = document.getElementById('device-list');
+
+      searchResultsSource = document.getElementById('search-results-template').innerHTML,
+        searchResultsTemplate = Handlebars.compile(searchResultsSource),
+        searchResultsPlaceholder = document.getElementById('search-results');
+
+      queueDisplaySource = document.getElementById('queue-display-template').innerHTML,
+        queueDisplayTemplate = Handlebars.compile(queueDisplaySource),
+        queueDisplayPlaceholder = document.getElementById('queue-display');
+
+      access_token = params.access_token,
+        refresh_token = params.refresh_token,
+        error = params.error;
+
+      if (error) {
+        alert('There was an error during the authentication');
+      } else {
+        if (access_token) {
+          // render oauth info
+          let credentials = {
+            access_token: access_token,
+            refresh_token: refresh_token
+          };
+
+          oauthPlaceholder.innerHTML = oauthTemplate(credentials);
+
+          $.ajax({
+            url: 'https://api.spotify.com/v1/me',
+            headers: {
+              'Authorization': 'Bearer ' + access_token
+            },
+            success: function (response) {
+              userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+
+              $.ajax({
+                url: 'https://api.spotify.com/v1/me/player/devices',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+                success: function (response) {
+                  devices = response.devices;
+                  deviceListPlaceholder.innerHTML = deviceListTemplate(response);
+                }
+              });
+
+              $('#login').hide();
+              $('#loggedin').show();
+            }
+          });
+        } else {
+          // render initial screen
+          $('#login').show();
+          $('#loggedin').hide();
         }
 
-        var userProfileSource = document.getElementById('user-profile-template').innerHTML,
-            userProfileTemplate = Handlebars.compile(userProfileSource),
-            userProfilePlaceholder = document.getElementById('user-profile');
-
-        var oauthSource = document.getElementById('oauth-template').innerHTML,
-            oauthTemplate = Handlebars.compile(oauthSource),
-            oauthPlaceholder = document.getElementById('oauth');
-
-        var params = getHashParams();
-
-        var access_token = params.access_token,
-            refresh_token = params.refresh_token,
-            error = params.error;
-
-        if (error) {
-          alert('There was an error during the authentication');
-        } else {
-          if (access_token) {
-            // render oauth info
+        document.getElementById('obtain-new-token').addEventListener('click', function () {
+          $.ajax({
+            url: '/refresh_token',
+            data: {
+              'refresh_token': refresh_token
+            }
+          }).done(function (data) {
+            access_token = data.access_token;
             oauthPlaceholder.innerHTML = oauthTemplate({
               access_token: access_token,
               refresh_token: refresh_token
             });
+          });
+        }, false);
 
-            $.ajax({
-                url: 'https://api.spotify.com/v1/me',
-                headers: {
-                  'Authorization': 'Bearer ' + access_token
-                },
-                success: function(response) {
-                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+      }
 
-                  $('#login').hide();
-                  $('#loggedin').show();
-                }
-            });
-          } else {
-              // render initial screen
-              $('#login').show();
-              $('#loggedin').hide();
+
+      document.getElementById('play-pause-song').addEventListener('click', resumeAndPause, false);
+      document.getElementById('next-song').addEventListener('click', playNext, false);
+      document.getElementById('search-btn').addEventListener('click', search, false);
+      document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
+
+    })();
+
+    /**
+     * Obtains parameters from the hash of the URL
+     * @return Object
+     */
+      function getHashParams() {
+      var hashParams = {};
+      var e, r = /([^&;=]+)=?([^&;]*)/g,
+        q = window.location.hash.substring(1);
+      while (e = r.exec(q)) {
+        hashParams[e[1]] = decodeURIComponent(e[2]);
+      }
+      return hashParams;
+    }
+    /**
+     * Plays the next song in the queue and sets the timer for when to play the next song
+     **/
+    function playNext() {
+      if (queue.length == 0) { console.log("Queue is empty"); return; }
+      queue.shift();
+      playSong();
+    }
+
+    function playSong(){
+      if (queue.length == 0) { console.log("Queue is empty"); return; }
+      playPauseIcon.className = 'fa fa-pause-circle fa-med'
+      $.ajax({
+        type: 'PUT',
+        url: 'https://api.spotify.com/v1/me/player/play?device_id=' + devices[0].id,
+        headers: {
+          'Authorization': 'Bearer ' + access_token
+        },
+        data: JSON.stringify({
+          "uris": [queue[0].uri]
+        })
+
+      }).done(function (data) {
+        //nothing returned
+      });
+
+
+      getTrackLength(URItoID(queue[0].uri), (duration) => {
+        if (qTimer) { qTimer.clear(); }
+        qTimer = new Timer(playNext, duration)
+      });
+
+      updateQueueDisplay();
+    }
+
+    function resumeAndPause() {
+      if (playState == "NOT_STARTED") {
+        alert("No song to resume. Add songs the queue to play");
+        return;
+      }
+
+      if (playState == 'PLAYING') {
+        playState = 'PAUSED';
+        qTimer.pause();
+        $.ajax({
+          type: 'PUT',
+          url: 'https://api.spotify.com/v1/me/player/pause?device_id=' + devices[0].id,
+          headers: {
+            'Authorization': 'Bearer ' + access_token
           }
+        }).done(function (data) {
+          //nothing returned
+        });
+        playPauseIcon.className = 'fa fa-play-circle fa-med'
+      }
+      else if (playState == 'PAUSED') {
+        playState = 'PLAYING';
+        qTimer.resume();
+        $.ajax({
+          type: 'PUT',
+          url: 'https://api.spotify.com/v1/me/player/play?device_id=' + devices[0].id,
+          headers: {
+            'Authorization': 'Bearer ' + access_token
+          }
+        }).done(function (data) {
+          //nothing returned
+        });
+        playPauseIcon.className = 'fa fa-pause-circle fa-med'
 
-          document.getElementById('obtain-new-token').addEventListener('click', function() {
-            $.ajax({
-              url: '/refresh_token',
-              data: {
-                'refresh_token': refresh_token
-              }
-            }).done(function(data) {
-              access_token = data.access_token;
-              oauthPlaceholder.innerHTML = oauthTemplate({
-                access_token: access_token,
-                refresh_token: refresh_token
-              });
-            });
-          }, false);
+      }
+
+    }
+
+    function addSong(index) {
+      
+      console.log("song added to queue: " + searchResults[index].name);
+      queue.push(searchResults[index]);
+      if (playState == 'NOT_STARTED') {
+        playState = 'PLAYING';
+        playSong();
+      }
+      updateQueueDisplay();
+
+    }
+
+    /**
+     * gets track length 
+     **/
+    function getTrackLength(trackId, setDuration) {
+      $.ajax({
+        type: 'GET',
+        url: 'https://api.spotify.com/v1/tracks/' + trackId,
+        headers: {
+          'Authorization': 'Bearer ' + access_token
         }
-      })();
-    </script>
-  </body>
-</html>
+      }).done(function (data) {
+        console.log("Current track length (ms): " + data.duration_ms);
+        setDuration(data.duration_ms);
+      });
+    }
 
+    function URItoID(uri) {
+      let n = uri.lastIndexOf(":");
+      return uri.substring(n + 1);
+    }
+
+    function search() {
+      var query = document.getElementById('search').value;
+      $.ajax({
+        type: 'GET',
+        url: 'https://api.spotify.com/v1/search?type=track&limit=6&q=' + query,
+        headers: {
+          'Authorization': 'Bearer ' + access_token
+        }
+      }).done(function (data) {
+        searchResultsPlaceholder.innerHTML = searchResultsTemplate(data.tracks);
+        searchResults = data.tracks.items;
+      });
+    }
+
+    function clearSearch(){
+      document.getElementById('search').value = '';
+      searchResults = [];
+      searchResultsPlaceholder.innerHTML = searchResultsTemplate([]);
+
+    }
+
+    function Timer(callback, delay) {
+      var timerId, start, remaining = delay;
+
+      this.pause = function () {
+        window.clearTimeout(timerId);
+        remaining -= new Date() - start;
+      };
+
+      this.resume = function () {
+        start = new Date();
+        window.clearTimeout(timerId);
+        timerId = window.setTimeout(callback, remaining);
+      };
+
+      this.clear = function () {
+        window.clearTimeout(timerId);
+      }
+
+      this.resume();
+    }
+
+    function updateQueueDisplay(){
+        console.log(queue);
+        queueDisplayPlaceholder.innerHTML = queueDisplayTemplate({items: queue});
+    }
+  </script>
+</body>
+
+</html>

@@ -62,3 +62,6 @@ typings/
 
 # so my credentials aren't shared
 credentials.js
+
+#font-awesome
+font-awesome-*

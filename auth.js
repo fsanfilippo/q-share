@@ -25,7 +25,7 @@ module.exports = {
         res.cookie(stateKey, state);
 
         // your application requests authorization
-        var scope = 'user-read-private user-read-email';
+        var scope = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state';
         res.redirect('https://accounts.spotify.com/authorize?' +
             querystring.stringify({
                 response_type: 'code',
@@ -55,7 +55,7 @@ module.exports = {
                     grant_type: 'authorization_code'
                 },
                 headers: {
-                    'Authorization': 'Basic ' + (new Buffer(crendentials.client_id + ':' + credentials.client_secret).toString('base64'))
+                    'Authorization': 'Basic ' + (new Buffer(credentials.client_id + ':' + credentials.client_secret).toString('base64'))
                 },
                 json: true
             };
@@ -65,6 +65,12 @@ module.exports = {
 
                     var access_token = body.access_token,
                         refresh_token = body.refresh_token;
+
+                    req.session.token = {
+                        access_token: access_token,
+                        refresh_token: refresh_token
+                    };
+                    
 
                     var options = {
                         url: 'https://api.spotify.com/v1/me',
