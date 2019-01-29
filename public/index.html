@@ -19,9 +19,10 @@
       width: 500px;
     }
 
-    .fa-med{
+    .fa-med {
       font-size: 2em;
     }
+    
   </style>
 </head>
 
@@ -41,10 +42,10 @@
         <div class="input-group">
           <input id="search" type="text" class="form-control" placeholder="Search Song">
           <span class="input-group-btn">
-              <button id="clear-search-btn" class="btn btn-default" type="button"><i class="fa fa-times"></i></button>
-         </span>
+            <button id="clear-search-btn" class="btn btn-default" type="button"><i class="fa fa-times"></i></button>
+          </span>
           <span class="input-group-btn">
-              <button id="search-btn" class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
+            <button id="search-btn" class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
           </span>
         </div>
         <div id="search-results">
@@ -52,7 +53,8 @@
         <div id="queue-display">
         </div>
       </div>
-      <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle" aria-hidden="true"></i></button>
+      <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
+          aria-hidden="true"></i></button>
       <button class="btn btn-default" id="next-song"><i id="next-song-icon" class="fa fa-med fa-step-forward"></i></button>
       <div id="device-list">
       </div>
@@ -101,12 +103,27 @@
       <ul class="list-group">
         {{#each items}}
         <li class="list-group-item clearfix">
-          {{this.name}}
-          <span class="pull-right">
-              <button class="btn btn-xs btn-default" onclick="addSong('{{@index}}')">
-                  <i class="fa fa-plus"></i>
-              </button>
-          </span>
+          <div class="container">
+            <div class="row">
+              <div class="col-sm-10">
+                {{this.name}}
+                <p>
+                  <small class="text-muted">
+                      {{#each this.artists}}
+                      <span>{{this.name}}</span>
+                      {{/each}}
+                  </small>
+                </p>
+              </div>
+              <div class="col-sm-2">
+                <span class="pull-right">
+                  <button class="btn btn-xs btn-default" onclick="addSong('{{@index}}')">
+                    <i class="fa fa-plus"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
         </li>
         {{/each}}
       </ul>
@@ -122,7 +139,7 @@
                 <th scope="col">#</th>
                 <th scope="col">Title</th>
                 <th scope="col">Artist</th>
-                <th scope="col">time</th>
+                <th scope="col">Time</th>
               </tr>
             </thead>
             <tbody>
@@ -131,7 +148,7 @@
                 <th scope="row">{{@index}}</th>
                 <td>{{this.name}}</td>
                 <td>{{this.artists.0.name}}</td>
-                <td>{{this.duration_ms}}</td>
+                <td>{{this.duration_string}}</td>
               </tr>
               {{/each}}
             </tbody>
@@ -156,7 +173,7 @@
     var devices;
     var queue = new Array();
     var qTimer; //timer that says when to play the next song
-    var playState = "NOT_STARTED";
+    var playState = "EMPTY";
     var playPauseIcon = document.getElementById('play-pause-icon');
     var searchResults;
 
@@ -262,13 +279,14 @@
       document.getElementById('search-btn').addEventListener('click', search, false);
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
 
+      updateQueueDisplay();
     })();
 
     /**
      * Obtains parameters from the hash of the URL
      * @return Object
      */
-      function getHashParams() {
+    function getHashParams() {
       var hashParams = {};
       var e, r = /([^&;=]+)=?([^&;]*)/g,
         q = window.location.hash.substring(1);
@@ -281,12 +299,19 @@
      * Plays the next song in the queue and sets the timer for when to play the next song
      **/
     function playNext() {
-      if (queue.length == 0) { console.log("Queue is empty"); return; }
       queue.shift();
+      updateQueueDisplay();
+      if (queue.length == 0) {
+        console.log("Queue is empty"); 
+        if(playState == "PLAYING"){
+          resumeAndPause();
+        }
+        playState = "EMPTY";
+        return; }
       playSong();
     }
 
-    function playSong(){
+    function playSong() {
       if (queue.length == 0) { console.log("Queue is empty"); return; }
       playPauseIcon.className = 'fa fa-pause-circle fa-med'
       $.ajax({
@@ -309,11 +334,11 @@
         qTimer = new Timer(playNext, duration)
       });
 
-      updateQueueDisplay();
+      
     }
 
     function resumeAndPause() {
-      if (playState == "NOT_STARTED") {
+      if (playState == "EMPTY") {
         alert("No song to resume. Add songs the queue to play");
         return;
       }
@@ -351,15 +376,25 @@
     }
 
     function addSong(index) {
-      
+
       console.log("song added to queue: " + searchResults[index].name);
+      
+      formatTime(searchResults[index]);
       queue.push(searchResults[index]);
-      if (playState == 'NOT_STARTED') {
+      if (playState == 'EMPTY') {
         playState = 'PLAYING';
         playSong();
       }
       updateQueueDisplay();
 
+    }
+
+    function formatTime(song){
+      let duration = song.duration_ms;
+      let mins = Math.floor(duration/1000/60);
+      let secs = Math.floor((duration - mins * 1000 * 60) / 1000);
+      secs = ("00" + secs).substr(-2,2);
+      song.duration_string = mins + ":" + secs;
     }
 
     /**
@@ -392,12 +427,13 @@
           'Authorization': 'Bearer ' + access_token
         }
       }).done(function (data) {
+        console.log(data.tracks);
         searchResultsPlaceholder.innerHTML = searchResultsTemplate(data.tracks);
         searchResults = data.tracks.items;
       });
     }
 
-    function clearSearch(){
+    function clearSearch() {
       document.getElementById('search').value = '';
       searchResults = [];
       searchResultsPlaceholder.innerHTML = searchResultsTemplate([]);
@@ -425,9 +461,9 @@
       this.resume();
     }
 
-    function updateQueueDisplay(){
-        console.log(queue);
-        queueDisplayPlaceholder.innerHTML = queueDisplayTemplate({items: queue});
+    function updateQueueDisplay() {
+      console.log(queue);
+      queueDisplayPlaceholder.innerHTML = queueDisplayTemplate({ items: queue });
     }
   </script>
 </body>
