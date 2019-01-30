@@ -22,7 +22,6 @@
     .fa-med {
       font-size: 2em;
     }
-    
   </style>
 </head>
 
@@ -176,21 +175,27 @@
     var playState = "EMPTY";
     var playPauseIcon = document.getElementById('play-pause-icon');
     var searchResults;
+    window.WebSocket = window.WebSocket || window.MozWebSocket;
+    var connection = new WebSocket('ws://127.0.0.1:1337');
+    var qOwned = false;
+    var queueKey;
 
+    //Handlebar template variables
     var userProfileSource, userProfileTemplate, userProfilePlaceholder;
-
     var oauthSource, oauthTemplate, oauthPlaceholder;
-
     var deviceListSource, deviceListTemplate, deviceListPlaceholder;
-
     var searchResultsSource, searchResultsTemplate, searchResultsPlaceholder;
-
     var queueDisplaySource, queueDisplayTemplate, queueDisplayPlaceholder;
-
     var access_token, refresh_token, error;
 
+    /**
+     * Anything that needs to load after the page loads
+     **/
     (function () {
 
+      /**
+       * Handlebar templates
+       **/
       userProfileSource = document.getElementById('user-profile-template').innerHTML,
         userProfileTemplate = Handlebars.compile(userProfileSource),
         userProfilePlaceholder = document.getElementById('user-profile');
@@ -211,10 +216,16 @@
         queueDisplayTemplate = Handlebars.compile(queueDisplaySource),
         queueDisplayPlaceholder = document.getElementById('queue-display');
 
+      /**
+       * Get the access token and refresh token from the URL
+       **/
       access_token = params.access_token,
         refresh_token = params.refresh_token,
         error = params.error;
 
+      /**
+       * Authenticate the User
+       **/
       if (error) {
         alert('There was an error during the authentication');
       } else {
@@ -255,32 +266,59 @@
           $('#login').show();
           $('#loggedin').hide();
         }
-
-        document.getElementById('obtain-new-token').addEventListener('click', function () {
-          $.ajax({
-            url: '/refresh_token',
-            data: {
-              'refresh_token': refresh_token
-            }
-          }).done(function (data) {
-            access_token = data.access_token;
-            oauthPlaceholder.innerHTML = oauthTemplate({
-              access_token: access_token,
-              refresh_token: refresh_token
-            });
-          });
-        }, false);
-
+        /**
+         * End Authentication Section
+         **/
       }
 
-
+      /**
+       * Attach click event listeners
+       **/
+      document.getElementById('obtain-new-token').addEventListener('click', obtainNewToken, false);
       document.getElementById('play-pause-song').addEventListener('click', resumeAndPause, false);
       document.getElementById('next-song').addEventListener('click', playNext, false);
       document.getElementById('search-btn').addEventListener('click', search, false);
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
-
       updateQueueDisplay();
+
+      
+
+      connection.onopen = function () {
+        // connection is opened and ready to use
+      };
+
+      connection.onerror = function (error) {
+        // an error occurred when sending/receiving data
+      };
+
+      connection.onmessage = function (message) {
+        // try to decode json (I assume that each message
+        // from server is json)
+        try {
+          var json = JSON.parse(message.data);
+        } catch (e) {
+          console.log('This doesn\'t look like a valid JSON: ',
+            message.data);
+          return;
+        }
+        // handle incoming message
+      };
     })();
+
+    function obtainNewToken() {
+      $.ajax({
+        url: '/refresh_token',
+        data: {
+          'refresh_token': refresh_token
+        }
+      }).done(function (data) {
+        access_token = data.access_token;
+        oauthPlaceholder.innerHTML = oauthTemplate({
+          access_token: access_token,
+          refresh_token: refresh_token
+        });
+      });
+    }
 
     /**
      * Obtains parameters from the hash of the URL
@@ -302,12 +340,13 @@
       queue.shift();
       updateQueueDisplay();
       if (queue.length == 0) {
-        console.log("Queue is empty"); 
-        if(playState == "PLAYING"){
+        console.log("Queue is empty");
+        if (playState == "PLAYING") {
           resumeAndPause();
         }
         playState = "EMPTY";
-        return; }
+        return;
+      }
       playSong();
     }
 
@@ -334,7 +373,7 @@
         qTimer = new Timer(playNext, duration)
       });
 
-      
+
     }
 
     function resumeAndPause() {
@@ -378,7 +417,7 @@
     function addSong(index) {
 
       console.log("song added to queue: " + searchResults[index].name);
-      
+
       formatTime(searchResults[index]);
       queue.push(searchResults[index]);
       if (playState == 'EMPTY') {
@@ -389,11 +428,11 @@
 
     }
 
-    function formatTime(song){
+    function formatTime(song) {
       let duration = song.duration_ms;
-      let mins = Math.floor(duration/1000/60);
+      let mins = Math.floor(duration / 1000 / 60);
       let secs = Math.floor((duration - mins * 1000 * 60) / 1000);
-      secs = ("00" + secs).substr(-2,2);
+      secs = ("00" + secs).substr(-2, 2);
       song.duration_string = mins + ":" + secs;
     }
 
@@ -465,6 +504,23 @@
       console.log(queue);
       queueDisplayPlaceholder.innerHTML = queueDisplayTemplate({ items: queue });
     }
+
+  function createQueue(key) {
+    qOwned = true;
+    queueKey = key;
+    connection.send(
+      JSON.stringify({ event: 'create-queue', data: {queueKey: key} }));
+  }
+  function addSongToQueue(song) {
+    connection.send(
+      JSON.stringify({ event: 'add-to-queue', data: {queueKey: queueKey, songData: song} }));
+  }
+  function joinQueue(key) {
+    queueKey = key;
+    connection.send(
+      JSON.stringify({ event: 'subscribe-to-queue', data: {queueKey: key} }));
+  }
+  
   </script>
 </body>
 
