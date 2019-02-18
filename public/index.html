@@ -120,6 +120,11 @@
                     <i class="fa fa-plus"></i>
                   </button>
                 </span>
+                <span class="pull-right">
+                    <button class="btn btn-xs btn-default" onclick="addSongToQueue('{{@index}}')">
+                      <i class="fa fa-arrow-up"></i>
+                    </button>
+                  </span>
               </div>
             </div>
           </div>
@@ -281,7 +286,7 @@
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
       updateQueueDisplay();
 
-      
+
 
       connection.onopen = function () {
         // connection is opened and ready to use
@@ -296,6 +301,9 @@
         // from server is json)
         try {
           var json = JSON.parse(message.data);
+          console.log(json);
+          queue = json;
+          updateQueueDisplay();
         } catch (e) {
           console.log('This doesn\'t look like a valid JSON: ',
             message.data);
@@ -378,7 +386,7 @@
 
     function resumeAndPause() {
       if (playState == "EMPTY") {
-        alert("No song to resume. Add songs the queue to play");
+        alert("No song to resume. Add songs to the queue to play");
         return;
       }
 
@@ -505,22 +513,31 @@
       queueDisplayPlaceholder.innerHTML = queueDisplayTemplate({ items: queue });
     }
 
-  function createQueue(key) {
-    qOwned = true;
-    queueKey = key;
-    connection.send(
-      JSON.stringify({ event: 'create-queue', data: {queueKey: key} }));
-  }
-  function addSongToQueue(song) {
-    connection.send(
-      JSON.stringify({ event: 'add-to-queue', data: {queueKey: queueKey, songData: song} }));
-  }
-  function joinQueue(key) {
-    queueKey = key;
-    connection.send(
-      JSON.stringify({ event: 'subscribe-to-queue', data: {queueKey: key} }));
-  }
-  
+    function createQueue(key) {
+      qOwned = true;
+      queueKey = key;
+      connection.send(
+        JSON.stringify({ event: 'create-queue', data: { queueKey: key } })
+      );
+      alert("queue created!");
+
+    }
+    function addSongToQueue(songIndex) {
+      if (!queueKey) {
+        alert("Please subscribe to or create a queue");
+      }
+      songInfo = searchResults[songIndex];
+      connection.send(
+        JSON.stringify({ event: 'add-to-queue', data: { queueKey: queueKey, songData: songInfo } })
+      );
+    }
+    function joinQueue(key) {
+      queueKey = key;
+      connection.send(
+        JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: key } })
+      );
+    }
+
   </script>
 </body>
 

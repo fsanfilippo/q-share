@@ -70,7 +70,7 @@ module.exports = {
                         access_token: access_token,
                         refresh_token: refresh_token
                     };
-                    
+
 
                     var options = {
                         url: 'https://api.spotify.com/v1/me',
@@ -80,7 +80,7 @@ module.exports = {
 
                     // use the access token to access the Spotify Web API
                     request.get(options, function (error, response, body) {
-                        
+
                     });
 
                     // we can also pass the token to the browser to make requests from there

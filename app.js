@@ -38,28 +38,26 @@ wsServer.on('request', function (request) {
     if (message.type === 'utf8') {
       let utf8Data = JSON.parse(message.utf8Data);
       let data = utf8Data.data;
-      switch(utf8Data.event){
-        case('create-queue'):{
+      switch (utf8Data.event) {
+        case ('create-queue'): {
           console.log("new queue created!");
           let key = data.queueKey;
           let subscribers = new Array();
           subscribers.push(connection);
-          queues.set(key, {subscribers: new Array(), songs: new Array()});
+          queues.set(key, { subscribers: subscribers, songs: new Array() });
           break;
         }
-        case('add-to-queue'):{
-          //TODO: check for uninstantiated queue
-
+        case ('add-to-queue'): {
           let key = data.queueKey;
           let song = data.songData;
           let subsAndSongs = queues.get(key);
+          if (!subsAndSongs) { return; }
           subsAndSongs.songs.push(song);
           broadcastUpdate(subsAndSongs);
           console.log("new songs added to queue!");
-          console.log(subsAndSongs);
           break;
         }
-        case('subscribe-to-queue'):{
+        case ('subscribe-to-queue'): {
           console.log("new subscription added!");
           let key = data.queueKey;
           //TODO: check for uninstantiated queue
@@ -76,10 +74,10 @@ wsServer.on('request', function (request) {
   });
 });
 
-function broadcastUpdate(subsAndSongs){
+function broadcastUpdate(subsAndSongs) {
   let msgStr = JSON.stringify(subsAndSongs.songs);
   subsAndSongs.subscribers.forEach(connection => {
-    connection.sendUtf(msgStr)
+    connection.send(msgStr)
   });
 }
 
