@@ -66,12 +66,6 @@ module.exports = {
                     var access_token = body.access_token,
                         refresh_token = body.refresh_token;
 
-                    req.session.token = {
-                        access_token: access_token,
-                        refresh_token: refresh_token
-                    };
-
-
                     var options = {
                         url: 'https://api.spotify.com/v1/me',
                         headers: { 'Authorization': 'Bearer ' + access_token },

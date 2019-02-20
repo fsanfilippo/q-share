@@ -11,8 +11,8 @@ var express = require('express'); // Express web server framework
 var cors = require('cors');
 var auth = require('./auth');
 var cookieParser = require('cookie-parser');
-var session = require('express-session');
 var queues = new Map();
+var selectedQueue = new Map();
 
 var stateKey = 'spotify_auth_state';
 
@@ -41,45 +41,108 @@ wsServer.on('request', function (request) {
       switch (utf8Data.event) {
         case ('create-queue'): {
           console.log("new queue created!");
+          console.log("remote address: " + connection.remoteAddress);
           let key = data.queueKey;
+          if (!key) break;
           let subscribers = new Array();
           subscribers.push(connection);
           queues.set(key, { subscribers: subscribers, songs: new Array() });
+          selectedQueue.set(connection, { key: key, owner: true });
           break;
         }
         case ('add-to-queue'): {
           let key = data.queueKey;
           let song = data.songData;
+          if (!key) break;
           let subsAndSongs = queues.get(key);
-          if (!subsAndSongs) { return; }
+          if (!subsAndSongs) break;
           subsAndSongs.songs.push(song);
-          broadcastUpdate(subsAndSongs);
+          broadcastUpdate(subsAndSongs, key);
           console.log("new songs added to queue!");
           break;
         }
         case ('subscribe-to-queue'): {
           console.log("new subscription added!");
           let key = data.queueKey;
-          //TODO: check for uninstantiated queue
+          if (!key) break;
           let subsAndSongs = queues.get(key);
+          if (!subsAndSongs) break;
           subsAndSongs.subscribers.push(connection);
+          selectedQueue.set(connection, { key: key, owner: false });
+          msgStr = JSON.stringify({ event: "update", data: { selectedQueue: key, songs: subsAndSongs.songs } });
+          connection.send(msgStr);
           break;
         }
+        case ('delete-queue'): {
+          let key = data.queueKey;
+          if (!key) break;
+          deleteQueue(data.queueKey);
+          break;
+        }
+        case ('update-queue'): {
+          let key = data.queueKey;
+          if (!key) break;
+          let newQueue = data.newQueue;
+          if (!newQueue) break;
+          let subsAndSongs = queues.get(key);
+          if (!subsAndSongs) break;
+          subsAndSongs.songs = newQueue;
+          broadcastUpdate(subsAndSongs, key);
+          break;
+        }
+        default: {
+          console.log("unknown event");
+          break;
+        }
+
       }
     }
   });
 
   connection.on('close', function (connection) {
-    // close user connection
+    let queue = selectedQueue.get(connection);
+    if (!queue) return;
+    console.log("CONNECTION CLOSED. The following queue was deleted: " + queue.key);
+    if (queue.owned) {
+      deleteQueue(queue.key);
+    }
+    else {
+      let subs = subsAndSongs.get(queue.key);
+      subs.remove(connection);
+    }
+    selectedQueue.delete(connection);
+
   });
 });
 
-function broadcastUpdate(subsAndSongs) {
-  let msgStr = JSON.stringify(subsAndSongs.songs);
+function broadcastUpdate(subsAndSongs, key) {
+  let msgStr = JSON.stringify({ event: "update", data: { selectedQueue: key, songs: subsAndSongs.songs } });
   subsAndSongs.subscribers.forEach(connection => {
     connection.send(msgStr)
   });
 }
+
+function broadCastDeletion(subs) {
+  subs.forEach(connection => {
+    connection.send({ event: "stale-queue" })
+  });
+}
+
+function unselectQueue(subs) {
+  subs.forEach(sub => {
+    selectedQueue.set(sub, null);
+  })
+}
+
+function deleteQueue(key) {
+  if (!key) return;
+  let subsAndSongs = queue.get(key)
+  let subs = subsAndSongs.subscribers;
+  unselectQueue(subs);
+  queue.delete(key);
+  broadCastDeletion(subs, key);
+}
+
 
 /**
  * End Websocket Setup
@@ -94,8 +157,6 @@ var app = express();
 app.use(express.static(__dirname + '/public'))
   .use(cors())
   .use(cookieParser())
-  .use(session({ secret: "sometimes I pee in the shower" }));
-
 app.get('/login', function (req, res) {
   auth.login(req, res);
 });
@@ -106,16 +167,6 @@ app.get('/callback', function (req, res) {
 
 app.get('/refresh_token', function (req, res) {
   auth.refreshToken(req, res);
-});
-
-app.get('/test', function (req, res) {
-  if (req.session.page_views) {
-    req.session.page_views++;
-    res.send("You visited this page " + req.session.page_views + " times");
-  } else {
-    req.session.page_views = 1;
-    res.send("Welcome to this page for the first time!");
-  }
 });
 
 

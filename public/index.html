@@ -54,7 +54,8 @@
       </div>
       <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
           aria-hidden="true"></i></button>
-      <button class="btn btn-default" id="next-song"><i id="next-song-icon" class="fa fa-med fa-step-forward"></i></button>
+      <button class="btn btn-default" id="next-song"><i id="next-song-icon"
+          class="fa fa-med fa-step-forward"></i></button>
       <div id="device-list">
       </div>
 
@@ -116,15 +117,10 @@
               </div>
               <div class="col-sm-2">
                 <span class="pull-right">
-                  <button class="btn btn-xs btn-default" onclick="addSong('{{@index}}')">
+                  <button class="btn btn-xs btn-default" onclick="addSongToQueue('{{@index}}')">
                     <i class="fa fa-plus"></i>
                   </button>
                 </span>
-                <span class="pull-right">
-                    <button class="btn btn-xs btn-default" onclick="addSongToQueue('{{@index}}')">
-                      <i class="fa fa-arrow-up"></i>
-                    </button>
-                  </span>
               </div>
             </div>
           </div>
@@ -299,16 +295,62 @@
       connection.onmessage = function (message) {
         // try to decode json (I assume that each message
         // from server is json)
+        var response;
         try {
-          var json = JSON.parse(message.data);
-          console.log(json);
-          queue = json;
-          updateQueueDisplay();
+          response = JSON.parse(message.data);
+          console.log(response);
+
         } catch (e) {
           console.log('This doesn\'t look like a valid JSON: ',
             message.data);
           return;
         }
+        switch (response.event) {
+          case ("update"): {
+            console.log("update recieved for queue: " + response.data.selectedQueue);
+            let songs = response.data.songs
+            if (!songs) break;
+            if (!Array.isArray(songs)) break;
+
+            if (queue.length !== 0) {
+              var lastFirstSong = queue[0];
+              console.log("last song uri: " + lastFirstSong.uri + " q uri: " + songs[0].uri)
+            }
+            queue = songs;
+
+
+            updateQueueDisplay();
+            if (qOwned) {
+              //Queue previously empty. Start playing
+              if (playState === 'EMPTY' && queue.length > 0) {
+                playState = 'PLAYING';
+                playSong();
+              }
+              //Queue updpates and it's empty. Stop playing
+              else if (playState === 'PLAYING' && queue.length === 0) {
+                resumeAndPause();
+                playState = 'EMPTY';
+              }
+              //First song still be playing?
+              else if (queue.length !== 0 && lastFirstSong && lastFirstSong.uri !== queue[0].uri) {
+                console.log("new song from update!");
+                playSong();
+              }
+
+            }
+
+            break;
+          }
+          case ("stale-queue"): {
+            alert("The selected Queue has expired");
+            qOwned = false;
+            queueKey = null;
+            break;
+          }
+
+        }
+
+
         // handle incoming message
       };
     })();
@@ -346,16 +388,20 @@
      **/
     function playNext() {
       queue.shift();
-      updateQueueDisplay();
-      if (queue.length == 0) {
-        console.log("Queue is empty");
-        if (playState == "PLAYING") {
-          resumeAndPause();
+      if (qOwned) {
+        if (playState === 'EMPTY' || queue.length === 0) {
+          playState = 'EMPTY'
+          return;
         }
-        playState = "EMPTY";
-        return;
+        else if (playState === 'PAUSED' || playState == 'PLAYING' && queue.length > 0) {
+          playSong();
+        }
+        else if (playState === 'PLAYING' && queue.length === 0) {
+          resumeAndPause();
+          playState = 'EMPTY';
+        }
       }
-      playSong();
+      broadcastUpdatedQueue();
     }
 
     function playSong() {
@@ -375,12 +421,9 @@
         //nothing returned
       });
 
-
-      getTrackLength(URItoID(queue[0].uri), (duration) => {
-        if (qTimer) { qTimer.clear(); }
-        qTimer = new Timer(playNext, duration)
-      });
-
+      if (qTimer) { qTimer.clear(); }
+      console.log("Length of current song: " + queue[0].duration_ms);
+      qTimer = new Timer(playNext, queue[0].duration_ms);
 
     }
 
@@ -422,47 +465,12 @@
 
     }
 
-    function addSong(index) {
-
-      console.log("song added to queue: " + searchResults[index].name);
-
-      formatTime(searchResults[index]);
-      queue.push(searchResults[index]);
-      if (playState == 'EMPTY') {
-        playState = 'PLAYING';
-        playSong();
-      }
-      updateQueueDisplay();
-
-    }
-
     function formatTime(song) {
       let duration = song.duration_ms;
       let mins = Math.floor(duration / 1000 / 60);
       let secs = Math.floor((duration - mins * 1000 * 60) / 1000);
       secs = ("00" + secs).substr(-2, 2);
       song.duration_string = mins + ":" + secs;
-    }
-
-    /**
-     * gets track length 
-     **/
-    function getTrackLength(trackId, setDuration) {
-      $.ajax({
-        type: 'GET',
-        url: 'https://api.spotify.com/v1/tracks/' + trackId,
-        headers: {
-          'Authorization': 'Bearer ' + access_token
-        }
-      }).done(function (data) {
-        console.log("Current track length (ms): " + data.duration_ms);
-        setDuration(data.duration_ms);
-      });
-    }
-
-    function URItoID(uri) {
-      let n = uri.lastIndexOf(":");
-      return uri.substring(n + 1);
     }
 
     function search() {
@@ -523,6 +531,8 @@
 
     }
     function addSongToQueue(songIndex) {
+
+      formatTime(searchResults[songIndex]);
       if (!queueKey) {
         alert("Please subscribe to or create a queue");
       }
@@ -536,6 +546,14 @@
       connection.send(
         JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: key } })
       );
+    }
+    function broadcastUpdatedQueue() {
+      if (!queueKey) return;
+      console.log(queue);
+      connection.send(
+        JSON.stringify({ event: 'update-queue', data: { queueKey: queueKey, newQueue: queue } })
+      );
+
     }
 
   </script>
