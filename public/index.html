@@ -145,7 +145,11 @@
             <tbody>
               {{#each items}}
               <tr>
-                <th scope="row">{{@index}}</th>
+                {{#if @first}}
+                  <td><i class="fa fa-volume-up"></i></td>
+                {{else}}
+                  <td scope="row">{{@index}} </td>
+                {{/if}}
                 <td>{{this.name}}</td>
                 <td>{{this.artists.0.name}}</td>
                 <td>{{this.duration_string}}</td>
@@ -314,10 +318,9 @@
 
             if (queue.length !== 0) {
               var lastFirstSong = queue[0];
-              console.log("last song uri: " + lastFirstSong.uri + " q uri: " + songs[0].uri)
+              console.log("last song uri: " + lastFirstSong.uri + " q uri: " + songs[0] || songs[0].uri)
             }
             queue = songs;
-
 
             updateQueueDisplay();
             if (qOwned) {
@@ -391,7 +394,6 @@
       if (qOwned) {
         if (playState === 'EMPTY' || queue.length === 0) {
           playState = 'EMPTY'
-          return;
         }
         else if (playState === 'PAUSED' || playState == 'PLAYING' && queue.length > 0) {
           playSong();
