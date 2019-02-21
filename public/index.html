@@ -28,11 +28,15 @@
       width: 50%;
     }
 
-
+    #create-queue-input,
+    #join-queue-input {
+      border-color: #28a745;
+    }
 
     #join-queue-submit,
     #create-queue-submit {
       padding: 2px 4.5px;
+
     }
   </style>
 </head>
@@ -69,15 +73,14 @@
       <button class="btn btn-default" id="next-song"><i id="next-song-icon"
           class="fa fa-med fa-step-forward"></i></button>
       <div id="join-queue-input-group" class="input-group">
-        <input id="join-queue-input" type="text" class="form-control btn-outline-success" placeholder="Join a Queue">
+        <input id="join-queue-input" type="text" class="form-control" placeholder="Join a Queue">
         <span class="input-group-btn">
           <button id="join-queue-submit" class="btn btn-outline-success" type="button">
             <i class="fa fa-med fa-users" aria-hidden="true"></i></button>
         </span>
       </div>
       <div id="create-queue-input-group" class="input-group">
-        <input id="create-queue-input" type="text" class="form-control btn-outline-success"
-          placeholder="Create a Queue">
+        <input id="create-queue-input" type="text" class="form-control" placeholder="Create a Queue">
         <span class="input-group-btn">
           <button id="create-queue-submit" class="btn btn-outline-success" type="button">
             <i class="fa fa-med fa-grav" aria-hidden="true"></i></button>
@@ -313,6 +316,8 @@
       document.getElementById('search-btn').addEventListener('click', search, false);
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
       document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
+      document.getElementById('create-queue-submit').addEventListener('click', createQueue, false);
+
       updateQueueDisplay();
 
 
@@ -552,11 +557,14 @@
       queueDisplayPlaceholder.innerHTML = queueDisplayTemplate({ items: queue });
     }
 
-    function createQueue(key) {
+    function createQueue() {
+      let selectedQueue = document.getElementById('create-queue-input').value;
+      console.log("created : " + selectedQueue);
+      if (!selectedQueue) return;
+      queueKey = selectedQueue;
       qOwned = true;
-      queueKey = key;
       connection.send(
-        JSON.stringify({ event: 'create-queue', data: { queueKey: key } })
+        JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
       );
       alert("queue created!");
 
@@ -574,7 +582,7 @@
     }
     function joinQueue() {
       let selectedQueue = document.getElementById('join-queue-input').value;
-      console.log("joined :" + selectedQueue);
+      console.log("joined : " + selectedQueue);
       if (!selectedQueue) return;
       queueKey = selectedQueue;
       connection.send(
