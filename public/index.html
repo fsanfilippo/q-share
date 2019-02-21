@@ -22,6 +22,18 @@
     .fa-med {
       font-size: 2em;
     }
+
+    #join-queue-input-group,
+    #create-queue-input-group {
+      width: 50%;
+    }
+
+
+
+    #join-queue-submit,
+    #create-queue-submit {
+      padding: 2px 4.5px;
+    }
   </style>
 </head>
 
@@ -56,6 +68,21 @@
           aria-hidden="true"></i></button>
       <button class="btn btn-default" id="next-song"><i id="next-song-icon"
           class="fa fa-med fa-step-forward"></i></button>
+      <div id="join-queue-input-group" class="input-group">
+        <input id="join-queue-input" type="text" class="form-control btn-outline-success" placeholder="Join a Queue">
+        <span class="input-group-btn">
+          <button id="join-queue-submit" class="btn btn-outline-success" type="button">
+            <i class="fa fa-med fa-users" aria-hidden="true"></i></button>
+        </span>
+      </div>
+      <div id="create-queue-input-group" class="input-group">
+        <input id="create-queue-input" type="text" class="form-control btn-outline-success"
+          placeholder="Create a Queue">
+        <span class="input-group-btn">
+          <button id="create-queue-submit" class="btn btn-outline-success" type="button">
+            <i class="fa fa-med fa-grav" aria-hidden="true"></i></button>
+        </span>
+      </div>
       <div id="device-list">
       </div>
 
@@ -221,6 +248,7 @@
         queueDisplayTemplate = Handlebars.compile(queueDisplaySource),
         queueDisplayPlaceholder = document.getElementById('queue-display');
 
+
       /**
        * Get the access token and refresh token from the URL
        **/
@@ -284,6 +312,7 @@
       document.getElementById('next-song').addEventListener('click', playNext, false);
       document.getElementById('search-btn').addEventListener('click', search, false);
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
+      document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
       updateQueueDisplay();
 
 
@@ -543,10 +572,13 @@
         JSON.stringify({ event: 'add-to-queue', data: { queueKey: queueKey, songData: songInfo } })
       );
     }
-    function joinQueue(key) {
-      queueKey = key;
+    function joinQueue() {
+      let selectedQueue = document.getElementById('join-queue-input').value;
+      console.log("joined :" + selectedQueue);
+      if (!selectedQueue) return;
+      queueKey = selectedQueue;
       connection.send(
-        JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: key } })
+        JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: queueKey } })
       );
     }
     function broadcastUpdatedQueue() {
