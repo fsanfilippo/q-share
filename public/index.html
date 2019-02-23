@@ -34,19 +34,23 @@
     #create-queue-submit-primary {
       width: 128px;
       height: 128px;
-      border-radius: 30px;
-
+      border: none;
+      position: absolute;
+      z-index: 2;
+      background-color: white;
+      border-radius: 0px 30px 30px 0px;
     }
 
     #jumbo-title {
       font-size: 13em;
       text-align: center;
       color: white;
+      text-shadow: 4px 4px 8px #000000;
     }
 
     .title-container {
-      margin-top: 10em;
-      margin-bottom: 10em;
+      margin-top: 7em;
+      margin-bottom: 7em;
       margin-left: 14%;
       margin-right: 14%
     }
@@ -54,6 +58,9 @@
     #join-queue-input-group-primary,
     #create-queue-input-group-primary {
       margin-top: 1em;
+      position: relative;
+
+
     }
 
 
@@ -61,22 +68,32 @@
     #create-queue-label {
       color: white;
       text-align: center;
-      padding-left: 29px;
+      padding-left: 15px;
       font-size: 4em;
+      text-shadow: 3px 3px 8px #000000;
     }
 
     #join-queue-input-primary,
     #create-queue-input-primary {
       height: 2em;
       font-size: 4em;
-      border-radius: 30px;
+      border-radius: 30px 0px 0px 30px;
       padding-left: 29px;
+      border: none;
+      margin-right: -2px;
+      flex: 0.75 1 auto;
     }
+
+    /* #create-queue-btn-container,
+    #join-queue-btn-container {
+      width: inherit;
+      border-radius: 0px 30px 30px 0px;
+    } */
 
     #label-input-container {
       margin: auto;
-      margin-left: 14%;
-      margin-right: 14%;
+      margin-left: 17%;
+      margin-right: 17%;
     }
 
     .form-group {
@@ -89,12 +106,17 @@
 
 
     body {
+      height: 100%;
       background-image: url('/mountain.gif');
       background-size: cover;
       /* background-color: black; */
       background-repeat: no-repeat;
       background-attachment: fixed;
       background-position: center top;
+    }
+
+    html {
+      min-height: 100%;
     }
   </style>
 </head>
@@ -110,10 +132,10 @@
     </div>
     <div class="form-group">
       <div id="label-input-container">
-        <label for="join-queue-input-primary" id="join-queue-label">Join a queue</label>
+        <label for="join-queue-input-primary" id="join-queue-label">Join queue</label>
         <div id="join-queue-input-group-primary" class="input-group">
-          <input id="join-queue-input-primary" type="text" class="form-control" placeholder="Q-ID">
-          <span class="input-group-btn">
+          <input id="join-queue-input-primary" type="text" class="form-control" placeholder="q name">
+          <span class="input-group-btn" id="join-queue-btn-container">
             <button id="join-queue-submit-primary" class="btn btn-outline-success" type="button">
               <i class="fa fa-5x fa-users" aria-hidden="true"></i></button>
           </span>
@@ -123,10 +145,10 @@
 
     <div class="form-group">
       <div id="label-input-container">
-        <label for="create-queue-input-primary" id="join-queue-label">Create a queue</label>
+        <label for="create-queue-input-primary" id="join-queue-label">Create queue</label>
         <div id="create-queue-input-group-primary" class="input-group">
-          <input id="create-queue-input-primary" type="text" class="form-control" placeholder="Q-ID">
-          <span class="input-group-btn">
+          <input id="create-queue-input-primary" type="text" class="form-control" placeholder="q name">
+          <span class="input-group-btn" id="create-queue-btn-container">
             <button id="create-queue-submit-primary" class="btn btn-outline-success"
               onclick="loggedIn?createQueue():window.location.replace('/login')">
               <i class="fa fa-5x fa-grav" aria-hidden="true"></i></button>
