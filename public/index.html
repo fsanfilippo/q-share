@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Example of the Authorization Code flow with Spotify</title>
+  <title>q-share</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
   <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
@@ -19,10 +19,6 @@
       width: 500px;
     }
 
-    .fa-med {
-      font-size: 2em;
-    }
-
     #join-queue-input-group,
     #create-queue-input-group {
       width: 50%;
@@ -30,23 +26,114 @@
 
     #create-queue-input,
     #join-queue-input {
-      border-color: #28a745;
+      border-color: #58B955;
+
     }
 
     #join-queue-submit,
     #create-queue-submit {
-      padding: 2px 4.5px;
+      width: 128px;
+      height: 128px;
+      border-radius: 30px;
 
+    }
+
+    #jumbo-title {
+      font-size: 13em;
+      text-align: center;
+      color: white;
+    }
+
+    .title-container {
+      margin-top: 10em;
+      margin-bottom: 10em;
+      margin-left: 14%;
+      margin-right: 14%
+    }
+
+    #join-queue-input-group-primary,
+    #create-queue-input-group-primary {
+      margin-top: 1em;
+    }
+
+
+    #join-queue-label,
+    #create-queue-label {
+      color: white;
+      text-align: center;
+      padding-left: 29px;
+      font-size: 4em;
+    }
+
+    #join-queue-input-primary,
+    #create-queue-input-primary {
+      height: 2em;
+      font-size: 4em;
+      border-radius: 30px;
+      padding-left: 29px;
+    }
+
+    #label-input-container {
+      margin: auto;
+      margin-left: 14%;
+      margin-right: 14%;
+    }
+
+    .form-group {
+      margin-bottom: 5em;
+    }
+
+    .input-group {
+      width: initial;
+    }
+
+
+    html,
+    body {
+
+      background-color: black;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div id="login">
-      <h1>This is an example of the Authorization Code flow</h1>
-      <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+
+  <!--
+    Login Page
+  -->
+  <div id="login">
+    <div class="title-container">
+      <h1 id="jumbo-title">q-share</h1>
     </div>
+    <div class="form-group">
+      <div id="label-input-container">
+        <label for="join-queue-input-primary" id="join-queue-label">Join a queue</label>
+        <div id="join-queue-input-group-primary" class="input-group">
+          <input id="join-queue-input-primary" type="text" class="form-control" placeholder="Q-ID">
+          <span class="input-group-btn">
+            <button id="join-queue-submit" class="btn btn-outline-success" type="button">
+              <i class="fa fa-5x fa-users" aria-hidden="true"></i></button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div id="label-input-container">
+        <label for="create-queue-input-primary" id="join-queue-label">Create a queue</label>
+        <div id="create-queue-input-group-primary" class="input-group">
+          <input id="create-queue-input-primary" type="text" class="form-control" placeholder="Q-ID">
+          <span class="input-group-btn">
+            <button id="create-queue-submit" class="btn btn-outline-success" type="button">
+              <i class="fa fa-5x fa-grav" aria-hidden="true"></i></button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+
+
+
     <div id="loggedin">
       <div id="user-profile">
       </div>
@@ -259,9 +346,104 @@
         refresh_token = params.refresh_token,
         error = params.error;
 
+      authenticateUser();
+
       /**
+       * End Authentication Section
+       **/
+
+      /**
+       * Attach click event listeners
+       **/
+      document.getElementById('obtain-new-token').addEventListener('click', obtainNewToken, false);
+      document.getElementById('play-pause-song').addEventListener('click', resumeAndPause, false);
+      document.getElementById('next-song').addEventListener('click', playNext, false);
+      document.getElementById('search-btn').addEventListener('click', search, false);
+      document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
+      document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
+      document.getElementById('create-queue-submit').addEventListener('click', createQueue, false);
+
+      updateQueueDisplay();
+
+
+
+
+    })();
+
+    connection.onopen = function () {
+      // connection is opened and ready to use
+    };
+
+    connection.onerror = function (error) {
+      // an error occurred when sending/receiving data
+    };
+
+    connection.onmessage = function (message) {
+      // try to decode json (I assume that each message
+      // from server is json)
+      var response;
+      try {
+        response = JSON.parse(message.data);
+        console.log(response);
+
+      } catch (e) {
+        console.log('This doesn\'t look like a valid JSON: ',
+          message.data);
+        return;
+      }
+      switch (response.event) {
+        case ("update"): {
+          console.log("update recieved for queue: " + response.data.selectedQueue);
+          let songs = response.data.songs
+          if (!songs) break;
+          if (!Array.isArray(songs)) break;
+
+          if (queue.length !== 0) {
+            var lastFirstSong = queue[0];
+            console.log("last song uri: " + lastFirstSong.uri + " q uri: " + songs[0] || songs[0].uri)
+          }
+          queue = songs;
+
+          updateQueueDisplay();
+          if (qOwned) {
+            //Queue previously empty. Start playing
+            if (playState === 'EMPTY' && queue.length > 0) {
+              playState = 'PLAYING';
+              playSong();
+            }
+            //Queue updpates and it's empty. Stop playing
+            else if (playState === 'PLAYING' && queue.length === 0) {
+              resumeAndPause();
+              playState = 'EMPTY';
+            }
+            //First song still be playing?
+            else if (queue.length !== 0 && lastFirstSong && lastFirstSong.uri !== queue[0].uri) {
+              console.log("new song from update!");
+              playSong();
+            }
+
+          }
+
+          break;
+        }
+        case ("stale-queue"): {
+          alert("The selected Queue has expired");
+          qOwned = false;
+          queueKey = null;
+          break;
+        }
+
+      }
+
+
+      // handle incoming message
+    };
+
+    /**
        * Authenticate the User
        **/
+
+    function authenticateUser() {
       if (error) {
         alert('There was an error during the authentication');
       } else {
@@ -279,20 +461,14 @@
             headers: {
               'Authorization': 'Bearer ' + access_token
             },
+            error: function (response) {
+              console.log(response);
+              obtainNewToken();
+            },
             success: function (response) {
               userProfilePlaceholder.innerHTML = userProfileTemplate(response);
 
-              $.ajax({
-                url: 'https://api.spotify.com/v1/me/player/devices',
-                headers: {
-                  'Authorization': 'Bearer ' + access_token
-                },
-                success: function (response) {
-                  devices = response.devices;
-                  deviceListPlaceholder.innerHTML = deviceListTemplate(response);
-                }
-              });
-
+              getDeviceList();
               $('#login').hide();
               $('#loggedin').show();
             }
@@ -302,101 +478,17 @@
           $('#login').show();
           $('#loggedin').hide();
         }
-        /**
-         * End Authentication Section
-         **/
       }
-
-      /**
-       * Attach click event listeners
-       **/
-      document.getElementById('obtain-new-token').addEventListener('click', obtainNewToken, false);
-      document.getElementById('play-pause-song').addEventListener('click', resumeAndPause, false);
-      document.getElementById('next-song').addEventListener('click', playNext, false);
-      document.getElementById('search-btn').addEventListener('click', search, false);
-      document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
-      document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
-      document.getElementById('create-queue-submit').addEventListener('click', createQueue, false);
-
-      updateQueueDisplay();
-
-
-
-      connection.onopen = function () {
-        // connection is opened and ready to use
-      };
-
-      connection.onerror = function (error) {
-        // an error occurred when sending/receiving data
-      };
-
-      connection.onmessage = function (message) {
-        // try to decode json (I assume that each message
-        // from server is json)
-        var response;
-        try {
-          response = JSON.parse(message.data);
-          console.log(response);
-
-        } catch (e) {
-          console.log('This doesn\'t look like a valid JSON: ',
-            message.data);
-          return;
-        }
-        switch (response.event) {
-          case ("update"): {
-            console.log("update recieved for queue: " + response.data.selectedQueue);
-            let songs = response.data.songs
-            if (!songs) break;
-            if (!Array.isArray(songs)) break;
-
-            if (queue.length !== 0) {
-              var lastFirstSong = queue[0];
-              console.log("last song uri: " + lastFirstSong.uri + " q uri: " + songs[0] || songs[0].uri)
-            }
-            queue = songs;
-
-            updateQueueDisplay();
-            if (qOwned) {
-              //Queue previously empty. Start playing
-              if (playState === 'EMPTY' && queue.length > 0) {
-                playState = 'PLAYING';
-                playSong();
-              }
-              //Queue updpates and it's empty. Stop playing
-              else if (playState === 'PLAYING' && queue.length === 0) {
-                resumeAndPause();
-                playState = 'EMPTY';
-              }
-              //First song still be playing?
-              else if (queue.length !== 0 && lastFirstSong && lastFirstSong.uri !== queue[0].uri) {
-                console.log("new song from update!");
-                playSong();
-              }
-
-            }
-
-            break;
-          }
-          case ("stale-queue"): {
-            alert("The selected Queue has expired");
-            qOwned = false;
-            queueKey = null;
-            break;
-          }
-
-        }
-
-
-        // handle incoming message
-      };
-    })();
+    }
 
     function obtainNewToken() {
       $.ajax({
         url: '/refresh_token',
         data: {
           'refresh_token': refresh_token
+        },
+        error: function (error) {
+          conosle.log(error);
         }
       }).done(function (data) {
         access_token = data.access_token;
@@ -404,8 +496,28 @@
           access_token: access_token,
           refresh_token: refresh_token
         });
+        getDeviceList();
+        authenticateUser();
       });
+
+      $('#login').hide();
+      $('#loggedin').show();
     }
+
+    function getDeviceList() {
+      $.ajax({
+        url: 'https://api.spotify.com/v1/me/player/devices',
+        headers: {
+          'Authorization': 'Bearer ' + access_token
+        },
+        success: function (response) {
+          devices = response.devices;
+          deviceListPlaceholder.innerHTML = deviceListTemplate(response);
+        }
+      });
+
+    }
+
 
     /**
      * Obtains parameters from the hash of the URL
