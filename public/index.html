@@ -88,10 +88,13 @@
     }
 
 
-    html,
     body {
-
-      background-color: black;
+      background-image: url('/mountain.gif');
+      background-size: cover;
+      /* background-color: black; */
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center top;
     }
   </style>
 </head>
@@ -475,6 +478,7 @@
               getDeviceList();
               loggedIn = true;
               $('#login').show();
+              $('#loggedin').hide();
 
             }
           });
