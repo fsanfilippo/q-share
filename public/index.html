@@ -30,8 +30,8 @@
 
     }
 
-    #join-queue-submit,
-    #create-queue-submit {
+    #join-queue-submit-primary,
+    #create-queue-submit-primary {
       width: 128px;
       height: 128px;
       border-radius: 30px;
@@ -111,7 +111,7 @@
         <div id="join-queue-input-group-primary" class="input-group">
           <input id="join-queue-input-primary" type="text" class="form-control" placeholder="Q-ID">
           <span class="input-group-btn">
-            <button id="join-queue-submit" class="btn btn-outline-success" type="button">
+            <button id="join-queue-submit-primary" class="btn btn-outline-success" type="button">
               <i class="fa fa-5x fa-users" aria-hidden="true"></i></button>
           </span>
         </div>
@@ -124,59 +124,61 @@
         <div id="create-queue-input-group-primary" class="input-group">
           <input id="create-queue-input-primary" type="text" class="form-control" placeholder="Q-ID">
           <span class="input-group-btn">
-            <button id="create-queue-submit" class="btn btn-outline-success" type="button">
+            <button id="create-queue-submit-primary" class="btn btn-outline-success"
+              onclick="loggedIn?createQueue():window.location.replace('/login')">
               <i class="fa fa-5x fa-grav" aria-hidden="true"></i></button>
           </span>
         </div>
       </div>
     </div>
+  </div>
 
 
 
 
-    <div id="loggedin">
-      <div id="user-profile">
-      </div>
-      <div id="oauth">
-      </div>
-      <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
-      <div class="container">
-        <div class="input-group">
-          <input id="search" type="text" class="form-control" placeholder="Search Song">
-          <span class="input-group-btn">
-            <button id="clear-search-btn" class="btn btn-default" type="button"><i class="fa fa-times"></i></button>
-          </span>
-          <span class="input-group-btn">
-            <button id="search-btn" class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
-          </span>
-        </div>
-        <div id="search-results">
-        </div>
-        <div id="queue-display">
-        </div>
-      </div>
-      <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
-          aria-hidden="true"></i></button>
-      <button class="btn btn-default" id="next-song"><i id="next-song-icon"
-          class="fa fa-med fa-step-forward"></i></button>
-      <div id="join-queue-input-group" class="input-group">
-        <input id="join-queue-input" type="text" class="form-control" placeholder="Join a Queue">
-        <span class="input-group-btn">
-          <button id="join-queue-submit" class="btn btn-outline-success" type="button">
-            <i class="fa fa-med fa-users" aria-hidden="true"></i></button>
-        </span>
-      </div>
-      <div id="create-queue-input-group" class="input-group">
-        <input id="create-queue-input" type="text" class="form-control" placeholder="Create a Queue">
-        <span class="input-group-btn">
-          <button id="create-queue-submit" class="btn btn-outline-success" type="button">
-            <i class="fa fa-med fa-grav" aria-hidden="true"></i></button>
-        </span>
-      </div>
-      <div id="device-list">
-      </div>
-
+  <div id="loggedin">
+    <div id="user-profile">
     </div>
+    <div id="oauth">
+    </div>
+    <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+    <div class="container">
+      <div class="input-group">
+        <input id="search" type="text" class="form-control" placeholder="Search Song">
+        <span class="input-group-btn">
+          <button id="clear-search-btn" class="btn btn-default" type="button"><i class="fa fa-times"></i></button>
+        </span>
+        <span class="input-group-btn">
+          <button id="search-btn" class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
+        </span>
+      </div>
+      <div id="search-results">
+      </div>
+      <div id="queue-display">
+      </div>
+    </div>
+    <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
+        aria-hidden="true"></i></button>
+    <button class="btn btn-default" id="next-song"><i id="next-song-icon"
+        class="fa fa-med fa-step-forward"></i></button>
+    <div id="join-queue-input-group" class="input-group">
+      <input id="join-queue-input" type="text" class="form-control" placeholder="Join a Queue">
+      <span class="input-group-btn">
+        <button id="join-queue-submit" class="btn btn-outline-success" type="button">
+          <i class="fa fa-med fa-users" aria-hidden="true"></i></button>
+      </span>
+    </div>
+    <div id="create-queue-input-group" class="input-group">
+      <input id="create-queue-input" type="text" class="form-control" placeholder="Create a Queue">
+      <span class="input-group-btn">
+        <button id="create-queue-submit" class="btn btn-outline-success" type="button">
+          <i class="fa fa-med fa-grav" aria-hidden="true"></i></button>
+      </span>
+    </div>
+    <div id="device-list">
+    </div>
+
+  </div>
   </div>
 
   <script id="user-profile-template" type="text/x-handlebars-template">
@@ -301,6 +303,8 @@
     var connection = new WebSocket('ws://127.0.0.1:1337');
     var qOwned = false;
     var queueKey;
+    var loggedIn = false;
+
 
     //Handlebar template variables
     var userProfileSource, userProfileTemplate, userProfilePlaceholder;
@@ -344,6 +348,7 @@
        **/
       access_token = params.access_token,
         refresh_token = params.refresh_token,
+        qid = params.qid,
         error = params.error;
 
       authenticateUser();
@@ -361,7 +366,6 @@
       document.getElementById('search-btn').addEventListener('click', search, false);
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
       document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
-      document.getElementById('create-queue-submit').addEventListener('click', createQueue, false);
 
       updateQueueDisplay();
 
@@ -469,8 +473,9 @@
               userProfilePlaceholder.innerHTML = userProfileTemplate(response);
 
               getDeviceList();
-              $('#login').hide();
-              $('#loggedin').show();
+              loggedIn = true;
+              $('#login').show();
+
             }
           });
         } else {
@@ -531,6 +536,11 @@
         hashParams[e[1]] = decodeURIComponent(e[2]);
       }
       return hashParams;
+    }
+    function addQIDtoURL(qid) {
+      var hash = window.location.hash.substring(1);
+      hash += "&qid=" + qid;
+      window.location.hash = hash;
     }
     /**
      * Plays the next song in the queue and sets the timer for when to play the next song
@@ -670,7 +680,7 @@
     }
 
     function createQueue() {
-      let selectedQueue = document.getElementById('create-queue-input').value;
+      let selectedQueue = document.getElementById('create-queue-input-primary').value;
       console.log("created : " + selectedQueue);
       if (!selectedQueue) return;
       queueKey = selectedQueue;
@@ -678,7 +688,7 @@
       connection.send(
         JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
       );
-      alert("queue created!");
+      addQIDtoURL(selectedQueue);
 
     }
     function addSongToQueue(songIndex) {
@@ -693,7 +703,7 @@
       );
     }
     function joinQueue() {
-      let selectedQueue = document.getElementById('join-queue-input').value;
+      let selectedQueue = document.getElementById('join-queue-input-primary').value;
       console.log("joined : " + selectedQueue);
       if (!selectedQueue) return;
       queueKey = selectedQueue;
