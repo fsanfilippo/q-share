@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>q-share</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="homepage.css">
+
+</head>
+
+<body>
+
+    <!--
+    Login Page
+  -->
+    <div id="login">
+        <div class="title-container">
+            <h1 id="jumbo-title">q-share</h1>
+        </div>
+        <div class="form-group">
+            <div id="label-input-container">
+                <label for="join-queue-input" id="join-queue-label">Join queue</label>
+                <div id="join-queue-input-group" class="input-group">
+                    <input id="join-queue-input" type="text" class="form-control" placeholder="q name">
+                    <span class="input-group-btn" id="join-queue-btn-container">
+                        <button id="join-queue-submit" class="btn btn-outline-success" type="button">
+                            <i class="fa fa-5x fa-users" aria-hidden="true"></i></button>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div id="label-input-container">
+                <label for="create-queue-input" id="join-queue-label">Create queue</label>
+                <div id="create-queue-input-group" class="input-group">
+                    <input id="create-queue-input" type="text" class="form-control" placeholder="q name">
+                    <span class="input-group-btn" id="create-queue-btn-container">
+                        <button id="create-queue-submit" class="btn btn-outline-success">
+                            <i class="fa fa-5x fa-grav" aria-hidden="true"></i></button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script>
+        var params = getHashParams();
+        var queueKey;
+        window.WebSocket = window.WebSocket || window.MozWebSocket;
+        var connection = new WebSocket('ws://127.0.0.1:1337');
+        var loggedIn = false;
+        /**
+         * Anything that needs to load after the page loads
+         **/
+        (function () {
+
+            document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
+            document.getElementById('create-queue-submit').addEventListener('click', createQueue, false);
+
+            /**
+                * Get the access token and refresh token from the URL
+            **/
+            access_token = params.access_token,
+                refresh_token = params.refresh_token,
+                qid = params.qid,
+                error = params.error;
+
+            authenticateUser();
+
+
+        })();
+
+        connection.onopen = function () {
+            // connection is opened and ready to use
+        };
+
+        connection.onerror = function (error) {
+            // an error occurred when sending/receiving data
+        };
+
+        connection.onmessage = function (message) {
+            // try to decode json (I assume that each message
+            // from server is json)
+            var response;
+            try {
+                response = JSON.parse(message.data);
+                console.log(response);
+
+            } catch (e) {
+                console.log('This doesn\'t look like a valid JSON: ',
+                    message.data);
+                return;
+            }
+            // handle incoming message
+        };
+
+        function createQueue() {
+            if (!loggedIn) {
+                window.location.replace('/login');
+                return false;
+            }
+            let selectedQueue = document.getElementById('create-queue-input').value;
+            console.log("created : " + selectedQueue);
+            if (!selectedQueue) return;
+            queueKey = selectedQueue;
+            qOwned = true;
+            connection.send(
+                JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
+            );
+            window.location.replace('/control-view');
+            return false;
+
+        }
+        function joinQueue() {
+            let selectedQueue = document.getElementById('join-queue-input').value;
+            console.log("joined : " + selectedQueue);
+            if (!selectedQueue) return;
+            queueKey = selectedQueue;
+            connection.send(
+                JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: queueKey } })
+            );
+            window.location.replace('/control-view');
+            return false;
+        }
+
+        /**
+       * Authenticate the User
+       **/
+
+        function authenticateUser() {
+            if (error) {
+                alert('There was an error during the authentication');
+            } else {
+                if (access_token) {
+                    // render oauth info
+                    let credentials = {
+                        access_token: access_token,
+                        refresh_token: refresh_token
+                    };
+
+                    $.ajax({
+                        url: 'https://api.spotify.com/v1/me',
+                        headers: {
+                            'Authorization': 'Bearer ' + access_token
+                        },
+                        error: function (response) {
+                            console.log(response);
+                            obtainNewToken();
+                        },
+                        success: function (response) {
+                            loggedIn = true;
+                        }
+                    });
+                }
+            }
+        }
+        function obtainNewToken() {
+            $.ajax({
+                url: '/refresh_token',
+                data: {
+                    'refresh_token': refresh_token
+                },
+                error: function (error) {
+                    conosle.log(error);
+                }
+            }).done(function (data) {
+                access_token = data.access_token;
+                oauthPlaceholder.innerHTML = oauthTemplate({
+                    access_token: access_token,
+                    refresh_token: refresh_token
+                });
+                getDeviceList();
+                authenticateUser();
+            });
+        }
+        function getHashParams() {
+            var hashParams = {};
+            var e, r = /([^&;=]+)=?([^&;]*)/g,
+                q = window.location.hash.substring(1);
+            while (e = r.exec(q)) {
+                hashParams[e[1]] = decodeURIComponent(e[2]);
+            }
+            return hashParams;
+        }
+
+    </script>
+</body>
+
+</html>

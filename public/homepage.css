@@ -1,0 +1,113 @@
+#loggedin {
+    display: none;
+}
+
+.text-overflow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 500px;
+}
+
+
+#create-queue-input,
+#join-queue-input {
+    border-color: #58B955;
+
+}
+
+#join-queue-submit,
+#create-queue-submit {
+    width: 100%;
+    height: 128px;
+    border: none;
+    position: absolute;
+    z-index: 2;
+    background-color: white;
+    border-radius: 0px 30px 30px 0px;
+
+}
+
+#join-queue-submit:hover,
+#create-queue-submit:hover {
+    background-color: #28a745;
+}
+
+#jumbo-title {
+    font-size: 13em;
+    text-align: center;
+    color: white;
+    text-shadow: 4px 4px 8px #000000;
+}
+
+.title-container {
+    margin-top: 7em;
+    margin-bottom: 7em;
+    margin-left: 14%;
+    margin-right: 14%
+}
+
+#join-queue-input-group,
+#create-queue-input-group {
+    margin-top: 1em;
+    position: relative;
+
+
+}
+
+
+#join-queue-label,
+#create-queue-label {
+    color: white;
+    text-align: center;
+    padding-left: 15px;
+    font-size: 4em;
+    text-shadow: 3px 3px 8px #000000;
+}
+
+#join-queue-input,
+#create-queue-input {
+    height: 2em;
+    font-size: 4em;
+    border-radius: 30px 0px 0px 30px;
+    padding-left: 29px;
+    border: none;
+    margin-right: -2px;
+    flex: 0.75 1 auto;
+}
+
+#create-queue-btn-container,
+#join-queue-btn-container {
+    flex: 0.25 1 auto;
+    position: relative;
+
+}
+
+#label-input-container {
+    margin-left: 17%;
+    margin-right: 17%;
+}
+
+.form-group {
+    margin-bottom: 5em;
+}
+
+.input-group {
+    width: initial;
+}
+
+
+body {
+    height: 100%;
+    background-image: url('/verticalChiTown.jpg');
+    background-color: black;
+    background-size: cover;
+    /* background-color: black; */
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center top;
+}
+
+html {
+    min-height: 100%;
+}

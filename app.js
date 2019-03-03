@@ -154,9 +154,13 @@ function deleteQueue(key) {
  */
 var app = express();
 
-app.use(express.static(__dirname + '/public'))
+app.use(express.static(__dirname + '/public', { index: false, extensions: ['html'] }))
   .use(cors())
   .use(cookieParser())
+
+app.get('/', function (req, res) {
+  res.redirect('homepage');
+})
 
 app.get('/login', function (req, res) {
   auth.login(req, res);
