@@ -2,7 +2,7 @@ var querystring = require('querystring');
 var request = require('request'); // "Request" library
 var credentials = require('./credentials');
 var stateKey = 'spotify_auth_state';
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+var redirect_uri = 'http://franks-rented-mac.local:8888/callback'; // Your redirect uri
 
 /**
  * Generates a random string containing numbers and letters
