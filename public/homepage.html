@@ -125,7 +125,7 @@
             connection.send(
                 JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
             );
-            window.location.replace('/control-view' + window.location.hash);
+            window.location.replace('/control-view' + window.location.hash + "&queueKey=" + queueKey + "&owner=true");
             return false;
 
         }
@@ -202,6 +202,7 @@
             }
             return hashParams;
         }
+
 
     </script>
 </body>

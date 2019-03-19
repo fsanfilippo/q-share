@@ -27,6 +27,14 @@
       width: initial;
     }
 
+    #profil-pic {
+      border-radius: 50%;
+      width: 40px;
+    }
+
+    #q-name-container {
+      margin: 1em;
+    }
 
     body {
       height: 100%;
@@ -46,12 +54,30 @@
 </head>
 
 <body>
+  <div id="q-name-container">
+    <div class="d-flex justify-content-start">
+      <h5>Playing From: </h5>
+      <div class="ml-auto" id="user-profile">
+      </div>
+    </div>
+    <h1 id="q-name"></h1>
+  </div>
+
+
+
+  <div class="d-flex justify-content-start">
+    <h2>Play Queue</h2>
+    <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
+        aria-hidden="true"></i></button>
+    <button class="btn btn-default" id="next-song"><i id="next-song-icon"
+        class="fa fa-med fa-step-forward"></i></button>
+  </div>
+
+  <div id="queue-display">
+  </div>
+
+
   <div id="control-view">
-    <div id="user-profile">
-    </div>
-    <div id="oauth">
-    </div>
-    <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
     <div class="container">
       <div class="input-group">
         <input id="search" type="text" class="form-control" placeholder="Search Song">
@@ -64,13 +90,8 @@
       </div>
       <div id="search-results">
       </div>
-      <div id="queue-display">
-      </div>
     </div>
-    <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
-        aria-hidden="true"></i></button>
-    <button class="btn btn-default" id="next-song"><i id="next-song-icon"
-        class="fa fa-med fa-step-forward"></i></button>
+
     <div id="device-list">
     </div>
 
@@ -78,28 +99,12 @@
   </div>
 
   <script id="user-profile-template" type="text/x-handlebars-template">
-    <h1>Logged in as {{display_name}}</h1>
-    <div class="media">
-      <div class="pull-left">
-        <img class="media-object" width="150" src="{{images.0.url}}" />
+    <div class="d-flex">
+      <div class="p-2">
+        <img id="profil-pic" src="{{images.0.url}}" />
       </div>
-      <div class="media-body">
-        <dl class="dl-horizontal">
-          <dt>Display name</dt>
-          <dd class="clearfix">{{display_name}}</dd>
-          <dt>Id</dt>
-          <dd>{{id}}</dd>
-          <dt>Email</dt>
-          <dd>{{email}}</dd>
-          <dt>Spotify URI</dt>
-          <dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
-          <dt>Link</dt>
-          <dd><a href="{{href}}">{{href}}</a></dd>
-          <dt>Profile Image</dt>
-          <dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
-          <dt>Country</dt>
-          <dd>{{country}}</dd>
-        </dl>
+      <div class="p-2">
+        <p>{{display_name}}{{~#if qOwned}}<span>(Owner)</span>{{~/if~}}</p>
       </div>
     </div>
   </script>
@@ -146,43 +151,33 @@
   </script>
 
   <script id="queue-display-template" type="text/x-handlebars-template">
-    <h2>Play Queue</h2>
-    <div class="container">
-        <table class="table table-dark">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Title</th>
-                <th scope="col">Artist</th>
-                <th scope="col">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{#each items}}
-              <tr>
-                {{#if @first}}
-                  <td><i class="fa fa-volume-up"></i></td>
-                {{else}}
-                  <td scope="row">{{@index}} </td>
-                {{/if}}
-                <td>{{this.name}}</td>
-                <td>{{this.artists.0.name}}</td>
-                <td>{{this.duration_string}}</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
+    <div class="d-flex justify-content-start">
+      <table class="table table-dark">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Title</th>
+            <th scope="col">Artist</th>
+            <th scope="col">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each items}}
+          <tr>
+            {{#if @first}}
+            <td><i class="fa fa-volume-up"></i></td>
+            {{else}}
+            <td scope="row">{{@index}} </td>
+            {{/if}}
+            <td>{{this.name}}</td>
+            <td>{{this.artists.0.name}}</td>
+            <td>{{this.duration_string}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </div>
     </div>
-  </script>
-
-  <script id="oauth-template" type="text/x-handlebars-template">
-    <h2>oAuth info</h2>
-    <dl class="dl-horizontal">
-      <dt>Access token</dt>
-      <dd class="text-overflow">{{access_token}}</dd>
-      <dt>Refresh token</dt>
-      <dd class="text-overflow">{{refresh_token}}</dd>
-    </dl>
+    </div>
   </script>
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
@@ -197,10 +192,16 @@
     var searchResults;
     window.WebSocket = window.WebSocket || window.MozWebSocket;
     var connection = new WebSocket('ws://127.0.0.1:1337');
-    var qOwned = false;
-    var queueKey;
+    var qOwned = params.owner == "true" || false;
+    var queueKey = params.queueKey;
     var loggedIn = false;
+    var queueTitle;
 
+
+    if (!queueKey) {
+      alert("No Queue Selected. Redricting to Homepage");
+      setTimeout(() => { window.location.replace('/homepage'), 4000 })
+    }
 
     //Handlebar template variables
     var userProfileSource, userProfileTemplate, userProfilePlaceholder;
@@ -222,10 +223,6 @@
         userProfileTemplate = Handlebars.compile(userProfileSource),
         userProfilePlaceholder = document.getElementById('user-profile');
 
-      oauthSource = document.getElementById('oauth-template').innerHTML,
-        oauthTemplate = Handlebars.compile(oauthSource),
-        oauthPlaceholder = document.getElementById('oauth');
-
       deviceListSource = document.getElementById('device-list-template').innerHTML,
         deviceListTemplate = Handlebars.compile(deviceListSource),
         deviceListPlaceholder = document.getElementById('device-list');
@@ -238,6 +235,7 @@
         queueDisplayTemplate = Handlebars.compile(queueDisplaySource),
         queueDisplayPlaceholder = document.getElementById('queue-display');
 
+      queueTitle = $("#q-name").text(queueKey);
 
       /**
        * Get the access token and refresh token from the URL
@@ -247,26 +245,26 @@
         qid = params.qid,
         error = params.error;
 
-      authenticateUser();
-      /**
-       * End Authentication Section
-       **/
-
       /**
        * Attach click event listeners
        **/
-      document.getElementById('obtain-new-token').addEventListener('click', obtainNewToken, false);
       document.getElementById('play-pause-song').addEventListener('click', resumeAndPause, false);
       document.getElementById('next-song').addEventListener('click', playNext, false);
       document.getElementById('search-btn').addEventListener('click', search, false);
       document.getElementById('clear-search-btn').addEventListener('click', clearSearch, false);
 
+      authenticateUser();
       updateQueueDisplay();
 
-
-
-
     })();
+
+    /**
+     * 
+     * 
+     * WEB SOCKET STUFF
+     * 
+     * 
+    **/
 
     connection.onopen = function () {
       // connection is opened and ready to use
@@ -332,14 +330,15 @@
         }
 
       }
-
-
-      // handle incoming message
     };
 
     /**
-       * Authenticate the User
-       **/
+     * 
+     * 
+     * USER AUTHENTICATION
+     * 
+     * 
+     **/
 
     function authenticateUser() {
       if (error) {
@@ -352,8 +351,6 @@
             refresh_token: refresh_token
           };
 
-          oauthPlaceholder.innerHTML = oauthTemplate(credentials);
-
           $.ajax({
             url: 'https://api.spotify.com/v1/me',
             headers: {
@@ -364,8 +361,8 @@
               obtainNewToken();
             },
             success: function (response) {
+              response.qOwned = qOwned;
               userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-
               getDeviceList();
               loggedIn = true;
             }
@@ -385,10 +382,6 @@
         }
       }).done(function (data) {
         access_token = data.access_token;
-        oauthPlaceholder.innerHTML = oauthTemplate({
-          access_token: access_token,
-          refresh_token: refresh_token
-        });
         getDeviceList();
         authenticateUser();
       });
@@ -582,6 +575,10 @@
       connection.send(
         JSON.stringify({ event: 'update-queue', data: { queueKey: queueKey, newQueue: queue } })
       );
+
+    }
+
+    function initInfoDisplay() {
 
     }
 
