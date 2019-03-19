@@ -40,13 +40,13 @@ wsServer.on('request', function (request) {
       let data = utf8Data.data;
       switch (utf8Data.event) {
         case ('create-queue'): {
-          console.log("new queue created!");
           console.log("remote address: " + connection.remoteAddress);
           let key = data.queueKey;
+          console.log("new queue created: " + key);
           if (!key) break;
           let subscribers = new Array();
           subscribers.push(connection);
-          queues.set(key, { subscribers: subscribers, songs: new Array() });
+          queues.set(key, { subscribers, songs: new Array() });
           selectedQueue.set(connection, { key: key, owner: true });
           break;
         }
@@ -58,6 +58,7 @@ wsServer.on('request', function (request) {
           if (!subsAndSongs) break;
           subsAndSongs.songs.push(song);
           broadcastUpdate(subsAndSongs, key);
+
           console.log("new songs added to queue!");
           break;
         }
@@ -118,6 +119,8 @@ wsServer.on('request', function (request) {
 function broadcastUpdate(subsAndSongs, key) {
   let msgStr = JSON.stringify({ event: "update", data: { selectedQueue: key, songs: subsAndSongs.songs } });
   subsAndSongs.subscribers.forEach(connection => {
+    console.log(connection);
+    console.log("sent update to: " + connection.remoteAddress);
     connection.send(msgStr)
   });
 }

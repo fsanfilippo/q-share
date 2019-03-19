@@ -27,19 +27,64 @@
       width: initial;
     }
 
-    #profil-pic {
+    /**
+        User profile
+    **/
+    #user-profile {
+      padding: 1em;
+      width: 100%;
+    }
+
+    #user-profile-container {
+      background-color: #3B4045
+    }
+
+    #profile-pic {
       border-radius: 50%;
-      width: 40px;
+      width: 90px;
+    }
+
+    .white-text {
+      color: white;
+    }
+
+    .text-v-center {
+      display: flex;
+      justify-content: center;
+      align-content: center;
+      flex-direction: column;
+      /* column | row */
     }
 
     #q-name-container {
-      margin: 1em;
+      padding: 2em 2em 2em 5em;
+      background-color: black;
+      margin-top: -1px;
     }
+
+    #q-name {
+      font-size: 100px;
+      letter-spacing: 10px;
+    }
+
+    #q-table {
+      vertical-align: bottom;
+      padding: .75rem;
+      width: 100%;
+    }
+
+    #q-table thead th {
+      vertical-align: bottom;
+    }
+
+    #q-table th {
+      padding: .75rem;
+    }
+
 
     body {
       height: 100%;
-      background-image: url('/verticalChiTown.jpg');
-      background-color: black;
+      /* background-color: black; */
       background-size: cover;
       /* background-color: black; */
       background-repeat: no-repeat;
@@ -54,23 +99,13 @@
 </head>
 
 <body>
-  <div id="q-name-container">
-    <div class="d-flex justify-content-start">
-      <h5>Playing From: </h5>
-      <div class="ml-auto" id="user-profile">
-      </div>
+  <div id="user-profile-container">
+    <div id="user-profile">
     </div>
-    <h1 id="q-name"></h1>
   </div>
 
-
-
-  <div class="d-flex justify-content-start">
-    <h2>Play Queue</h2>
-    <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
-        aria-hidden="true"></i></button>
-    <button class="btn btn-default" id="next-song"><i id="next-song-icon"
-        class="fa fa-med fa-step-forward"></i></button>
+  <div id="q-name-container" class="text-v-center white-text">
+    <span id="q-name"></span>
   </div>
 
   <div id="queue-display">
@@ -94,17 +129,28 @@
 
     <div id="device-list">
     </div>
+    <div class="d-flex justify-content-start">
+
+      <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
+          aria-hidden="true"></i></button>
+      <button class="btn btn-default" id="next-song"><i id="next-song-icon"
+          class="fa fa-med fa-step-forward"></i></button>
+    </div>
+
 
   </div>
   </div>
 
   <script id="user-profile-template" type="text/x-handlebars-template">
-    <div class="d-flex">
+    <div class="d-flex justify-content-between">
       <div class="p-2">
-        <img id="profil-pic" src="{{images.0.url}}" />
+        <img id="profile-pic" src="{{images.0.url}}" />
       </div>
-      <div class="p-2">
-        <p>{{display_name}}{{~#if qOwned}}<span>(Owner)</span>{{~/if~}}</p>
+      <div class="p-2 text-v-center">
+        <h1 class="white-text" id="q-share-title">q-share</h1>
+      </div>
+      <div class="p-2 text-v-center" id="user-name-container">
+        <span class="white-text">{{~#if qOwned}}queue owner{{~/if~}}</span>
       </div>
     </div>
   </script>
@@ -152,12 +198,11 @@
 
   <script id="queue-display-template" type="text/x-handlebars-template">
     <div class="d-flex justify-content-start">
-      <table class="table table-dark">
+      <table id="q-table" class="table table-dark">
         <thead>
           <tr>
-            <th scope="col">#</th>
+            <th scope="col"></th>
             <th scope="col">Title</th>
-            <th scope="col">Artist</th>
             <th scope="col">Time</th>
           </tr>
         </thead>
@@ -167,10 +212,12 @@
             {{#if @first}}
             <td><i class="fa fa-volume-up"></i></td>
             {{else}}
-            <td scope="row">{{@index}} </td>
+            <td scope="row"></td>
             {{/if}}
-            <td>{{this.name}}</td>
-            <td>{{this.artists.0.name}}</td>
+            <td>
+              <p>{{this.name}}</p>
+              <p>{{this.artists.0.name}}</p>
+            </td>
             <td>{{this.duration_string}}</td>
           </tr>
           {{/each}}
@@ -268,6 +315,7 @@
 
     connection.onopen = function () {
       // connection is opened and ready to use
+      console.log("SOCKET OPEN");
     };
 
     connection.onerror = function (error) {
@@ -275,6 +323,7 @@
     };
 
     connection.onmessage = function (message) {
+      console.log("message recieved");
       // try to decode json (I assume that each message
       // from server is json)
       var response;
@@ -558,7 +607,6 @@
     }
 
     function addSongToQueue(songIndex) {
-
       formatTime(searchResults[songIndex]);
       if (!queueKey) {
         alert("Please subscribe to or create a queue");
