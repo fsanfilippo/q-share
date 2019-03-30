@@ -103,21 +103,37 @@
             let data = message.data;
             try {
                 response = JSON.parse(data.trim());
-                console.log(response.data.success);
-                if (response.data.success) {
-                    let selectedQueue = document.getElementById('create-queue-input').value;
-                    window.location.replace('/control-view' + window.location.hash + "&queueKey=" + selectedQueue + "&owner=true");
-                }
-                else {
-                    alert('That queue name is already being used');
-                }
-
             } catch (e) {
                 console.log(e);
                 return;
             }
-            // handle incoming message
-        };
+
+            switch (response.event) {
+                case ('reserve-queue'): {
+                    if (response.data.success) {
+                        let selectedQueue = document.getElementById('create-queue-input').value;
+                        window.location.replace('/control-view' + window.location.hash + "&queueKey=" + selectedQueue + "&owner=true");
+                    }
+                    else {
+                        alert('That queue name is already being used');
+                    }
+                    break;
+                }
+                case ('check-queue-exists'): {
+                    if (response.data.success) {
+                        let selectedQueue = document.getElementById('join-queue-input').value;
+                        window.location.replace('/control-view#queueKey=' + selectedQueue);
+                    }
+                    else {
+                        alert('That queue name does not exist');
+                    }
+                }
+                default: {
+                    console.log('Unkown Event');
+                }
+                // handle incoming message
+            };
+        }
 
         function reserveQueue() {
             if (!loggedIn) {
@@ -134,14 +150,12 @@
         }
         function joinQueue() {
             let selectedQueue = document.getElementById('join-queue-input').value;
-            console.log('joined : ' + selectedQueue);
             if (!selectedQueue) return;
             connection.send(
-                JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: selectedQueue } })
-            );
-            window.location.replace('/control-view');
-            return false;
+                JSON.stringify({ event: 'check-queue-exists', data: { queueKey: selectedQueue } })
+            )
         }
+
 
         /**
        * Authenticate the User

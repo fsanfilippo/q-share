@@ -1,6 +1,6 @@
 /**
  * q-share server that saves the state of created queues and controls requests to change
- * the queue state. Handles Spotify Auth also.
+ * the queue state. s Spotify Auth also.
  *
  * Author: Francis San Filippo
  */
@@ -41,27 +41,31 @@ wsServer.on('request', function (request) {
       switch (utf8Data.event) {
         case ('create-queue'): {
           console.log('queue created');
-          handleCreateQueueEvent(data, connection);
+          createQueueEvent(data, connection);
           break;
         }
         case ('add-to-queue'): {
-          handleAddToQueueEvent(data, connection);
+          addToQueueEvent(data, connection);
           break;
         }
         case ('subscribe-to-queue'): {
-          handleSubscribeToQueuEvent(data, connection);
+          subscribeToQueueEvent(data, connection);
           break;
         }
         case ('delete-queue'): {
-          handleDeleteQueueEvent(data, connection);
+          deleteQueueEvent(data, connection);
           break;
         }
         case ('update-queue'): {
-          handleUpdateQueueEvent(data, connection);
+          updateQueueEvent(data, connection);
           break;
         }
         case ('reserve-queue'): {
-          handleReserveQueueEvent(data, connection);
+          reserveQueueEvent(data, connection);
+          break;
+        }
+        case ('check-queue-exists'): {
+          checkQueueExists(data, connection);
           break;
         }
         default: {
@@ -122,7 +126,7 @@ function deleteQueue(key) {
     ~~~~~~~~ MESSAGE EVENTS ~~~~~~~~~
 
 */
-function handleCreateQueueEvent(data, connection) {
+function createQueueEvent(data, connection) {
   let key = data.queueKey;
 
   //Is there queue key?
@@ -150,7 +154,7 @@ function handleCreateQueueEvent(data, connection) {
   selectedQueue.set(connection, { key: key, owner: true });
 }
 
-function handleAddToQueueEvent(data, connection) {
+function addToQueueEvent(data, connection) {
   let key = data.queueKey;
   let song = data.songData;
 
@@ -166,29 +170,46 @@ function handleAddToQueueEvent(data, connection) {
   broadcastUpdate(subsAndSongs, key);
 
   console.log('new songs added to queue!');
-  break;
 }
 
-function handleSubscribeToQueuEvent(data, connection) {
-  console.log('new subscription added!');
+function subscribeToQueueEvent(data, connection) {
+
   let key = data.queueKey;
-  if (!key) return;
+  if (!key) {
+    sendEvent('error', connection, 'queue key not specified');
+    return;
+  }
   let subsAndSongs = queues.get(key);
-  if (!subsAndSongs) return;
+  if (!subsAndSongs) {
+    sendEvent('error', connection, key + ' queue does not exist');
+    return;
+  }
   subsAndSongs.subscribers.push(connection);
   selectedQueue.set(connection, { key: key, owner: false });
   msgStr = JSON.stringify({ event: 'update', data: { selectedQueue: key, songs: subsAndSongs.songs } });
   connection.send(msgStr);
+  console.log('new subscription added!');
+}
+
+function checkQueueExists(data, connection) {
+  let key = data.queueKey;
+  let subsAndSongs = queues.get(key);
+  if (!subsAndSongs) {
+    sendEvent('check-queue-exists', connection, { success: false });
+  }
+  else {
+    sendEvent('check-queue-exists', connection, { success: true });
+  }
 }
 
 
-function handleDeleteQueueEvent(data, connection) {
+function deleteQueueEvent(data, connection) {
   let key = data.queueKey;
   if (!key) return;
   deleteQueue(data.queueKey);
 }
 
-function handleUpdateQueueEvent(data, connection) {
+function updateQueueEvent(data, connection) {
   let key = data.queueKey;
   if (!key) return;
   let newQueue = data.newQueue;
@@ -199,17 +220,17 @@ function handleUpdateQueueEvent(data, connection) {
   broadcastUpdate(subsAndSongs, key);
 }
 
-function handleReserveQueueEvent(data, connection) {
+function reserveQueueEvent(data, connection) {
 
   let key = data.queueKey;
   if (!key) return;
   if (queues.get(key)) {
-    sendEvent('error', connection, { success: false });
+    sendEvent('reserve-queue', connection, { success: false });
     return;
   }
   console.log('Reserved a queue');
   queues.set(key, { reserved: true });
-  sendEvent('success', connection, { success: true });
+  sendEvent('reserve-queue', connection, { success: true });
 
 }
 function sendEvent(event, connection, data) {

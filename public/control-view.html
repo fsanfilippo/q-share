@@ -3,10 +3,10 @@
 
 <head>
   <title>q-share</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
-  <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
-  <style type="text/css">
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css'>
+  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js'></script>
+  <link rel='stylesheet' href='font-awesome-4.7.0/css/font-awesome.min.css'>
+  <style type='text/css'>
     .text-overflow {
       overflow: hidden;
       text-overflow: ellipsis;
@@ -99,63 +99,63 @@
 </head>
 
 <body>
-  <div id="user-profile-container">
-    <div id="user-profile">
+  <div id='user-profile-container'>
+    <div id='user-profile'>
     </div>
   </div>
 
-  <div id="q-name-container" class="text-v-center white-text">
-    <span id="q-name"></span>
+  <div id='q-name-container' class='text-v-center white-text'>
+    <span id='q-name'></span>
   </div>
 
-  <div id="queue-display">
+  <div id='queue-display'>
   </div>
 
 
-  <div id="control-view">
-    <div class="container">
-      <div class="input-group">
-        <input id="search" type="text" class="form-control" placeholder="Search Song">
-        <span class="input-group-btn">
-          <button id="clear-search-btn" class="btn btn-default" type="button"><i class="fa fa-times"></i></button>
+  <div id='control-view'>
+    <div class='container'>
+      <div class='input-group'>
+        <input id='search' type='text' class='form-control' placeholder='Search Song'>
+        <span class='input-group-btn'>
+          <button id='clear-search-btn' class='btn btn-default' type='button'><i class='fa fa-times'></i></button>
         </span>
-        <span class="input-group-btn">
-          <button id="search-btn" class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
+        <span class='input-group-btn'>
+          <button id='search-btn' class='btn btn-default' type='button'><i class='fa fa-search'></i></button>
         </span>
       </div>
-      <div id="search-results">
+      <div id='search-results'>
       </div>
     </div>
 
-    <div id="device-list">
+    <div id='device-list'>
     </div>
-    <div class="d-flex justify-content-start">
+    <div class='d-flex justify-content-start'>
 
-      <button class="btn btn-default" id="play-pause-song"><i id="play-pause-icon" class="fa fa-med fa-play-circle"
-          aria-hidden="true"></i></button>
-      <button class="btn btn-default" id="next-song"><i id="next-song-icon"
-          class="fa fa-med fa-step-forward"></i></button>
+      <button class='btn btn-default' id='play-pause-song'><i id='play-pause-icon' class='fa fa-med fa-play-circle'
+          aria-hidden='true'></i></button>
+      <button class='btn btn-default' id='next-song'><i id='next-song-icon'
+          class='fa fa-med fa-step-forward'></i></button>
     </div>
 
 
   </div>
   </div>
 
-  <script id="user-profile-template" type="text/x-handlebars-template">
-    <div class="d-flex justify-content-between">
-      <div class="p-2">
-        <img id="profile-pic" src="{{images.0.url}}" />
+  <script id='user-profile-template' type='text/x-handlebars-template'>
+    <div class='d-flex justify-content-between'>
+      <div class='p-2'>
+        <img id='profile-pic' src='{{images.0.url}}' />
       </div>
-      <div class="p-2 text-v-center">
-        <h1 class="white-text" id="q-share-title">q-share</h1>
+      <div class='p-2 text-v-center'>
+        <h1 class='white-text' id='q-share-title'>q-share</h1>
       </div>
-      <div class="p-2 text-v-center" id="user-name-container">
-        <span class="white-text">{{~#if qOwned}}queue owner{{~/if~}}</span>
+      <div class='p-2 text-v-center' id='user-name-container'>
+        <span class='white-text'>{{~#if qOwned}}queue owner{{~/if~}}</span>
       </div>
     </div>
   </script>
 
-  <script id="device-list-template" type="text/x-handlebars-template">
+  <script id='device-list-template' type='text/x-handlebars-template'>
     <h3>Available Devices</h3>
     <ol>
       {{#each devices}}
@@ -164,27 +164,27 @@
     </ol>
   </script>
 
-  <script id="search-results-template" type="text/x-handlebars-template">
-    <div class="container">
-      <ul class="list-group">
+  <script id='search-results-template' type='text/x-handlebars-template'>
+    <div class='container'>
+      <ul class='list-group'>
         {{#each items}}
-        <li class="list-group-item clearfix">
-          <div class="container">
-            <div class="row">
-              <div class="col-sm-10">
+        <li class='list-group-item clearfix'>
+          <div class='container'>
+            <div class='row'>
+              <div class='col-sm-10'>
                 {{this.name}}
                 <p>
-                  <small class="text-muted">
+                  <small class='text-muted'>
                       {{#each this.artists}}
                       <span>{{this.name}}</span>
                       {{/each}}
                   </small>
                 </p>
               </div>
-              <div class="col-sm-2">
-                <span class="pull-right">
-                  <button class="btn btn-xs btn-default" onclick="addSongToQueue('{{@index}}')">
-                    <i class="fa fa-plus"></i>
+              <div class='col-sm-2'>
+                <span class='pull-right'>
+                  <button class='btn btn-xs btn-default' onclick='addSongToQueue("{{@index}}")'>
+                    <i class='fa fa-plus'></i>
                   </button>
                 </span>
               </div>
@@ -196,23 +196,23 @@
     </div>
   </script>
 
-  <script id="queue-display-template" type="text/x-handlebars-template">
-    <div class="d-flex justify-content-start">
-      <table id="q-table" class="table table-dark">
+  <script id='queue-display-template' type='text/x-handlebars-template'>
+    <div class='d-flex justify-content-start'>
+      <table id='q-table' class='table table-dark'>
         <thead>
           <tr>
-            <th scope="col"></th>
-            <th scope="col">Title</th>
-            <th scope="col">Time</th>
+            <th scope='col'></th>
+            <th scope='col'>Title</th>
+            <th scope='col'>Time</th>
           </tr>
         </thead>
         <tbody>
           {{#each items}}
           <tr>
             {{#if @first}}
-            <td><i class="fa fa-volume-up"></i></td>
+            <td><i class='fa fa-volume-up'></i></td>
             {{else}}
-            <td scope="row"></td>
+            <td scope='row'></td>
             {{/if}}
             <td>
               <p>{{this.name}}</p>
@@ -227,20 +227,20 @@
     </div>
   </script>
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src='//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js'></script>
+  <script src='http://code.jquery.com/jquery-1.10.1.min.js'></script>
   <script>
 
     var params = getHashParams();
     var devices;
     var queue = new Array();
     var qTimer; //timer that says when to play the next song
-    var playState = "EMPTY";
+    var playState = 'EMPTY';
     var playPauseIcon = document.getElementById('play-pause-icon');
     var searchResults;
     window.WebSocket = window.WebSocket || window.MozWebSocket;
     var connection = new WebSocket('ws://127.0.0.1:1337');
-    var qOwned = params.owner == "true" || false;
+    var qOwned = params.owner == 'true' || false;
     var queueKey = params.queueKey;
     var loggedIn = false;
     var queueTitle;
@@ -248,12 +248,9 @@
     console.log(params);
 
     if (!queueKey) {
-      alert("No Queue Selected. Redricting to Homepage");
+      alert('No Queue Selected. Redricting to Homepage');
       setTimeout(() => { window.location.replace('/homepage'), 4000 })
     }
-
-    console.log(queueKey);
-    queueTitle = $("#q-name").text(queueKey);
 
     //Handlebar template variables
     var userProfileSource, userProfileTemplate, userProfilePlaceholder;
@@ -294,7 +291,6 @@
        **/
       access_token = params.access_token,
         refresh_token = params.refresh_token,
-        qid = params.qid,
         error = params.error;
 
       /**
@@ -308,6 +304,8 @@
       authenticateUser();
       updateQueueDisplay();
 
+      queueTitle = $('#q-name').text(queueKey);
+
     })();
 
     /**
@@ -320,7 +318,14 @@
 
     connection.onopen = function () {
       // connection is opened and ready to use
-      console.log("SOCKET OPEN");
+      console.log('SOCKET OPEN');
+
+      if (qOwned)
+        createQueue();
+      else
+        joinQueue();
+
+
     };
 
     connection.onerror = function (error) {
@@ -328,7 +333,7 @@
     };
 
     connection.onmessage = function (message) {
-      console.log("message recieved");
+      console.log('message recieved');
       // try to decode json (I assume that each message
       // from server is json)
       var response;
@@ -342,15 +347,15 @@
         return;
       }
       switch (response.event) {
-        case ("update"): {
-          console.log("update recieved for queue: " + response.data.selectedQueue);
+        case ('update'): {
+          console.log('update recieved for queue: ' + response.data.selectedQueue);
           let songs = response.data.songs
           if (!songs) break;
           if (!Array.isArray(songs)) break;
 
           if (queue.length !== 0) {
             var lastFirstSong = queue[0];
-            console.log("last song uri: " + lastFirstSong.uri + " q uri: " + songs[0] || songs[0].uri)
+            console.log('last song uri: ' + lastFirstSong.uri + ' q uri: ' + songs[0] || songs[0].uri)
           }
           queue = songs;
 
@@ -368,7 +373,7 @@
             }
             //First song still be playing?
             else if (queue.length !== 0 && lastFirstSong && lastFirstSong.uri !== queue[0].uri) {
-              console.log("new song from update!");
+              console.log('new song from update!');
               playSong();
             }
 
@@ -376,13 +381,13 @@
 
           break;
         }
-        case ("stale-queue"): {
-          alert("The selected Queue has expired");
+        case ('stale-queue'): {
+          alert('The selected Queue has expired');
           qOwned = false;
           queueKey = null;
           break;
         }
-        case ("error"): {
+        case ('error'): {
           console.log(response.data);
         }
       }
@@ -421,12 +426,10 @@
               userProfilePlaceholder.innerHTML = userProfileTemplate(response);
               getDeviceList();
               loggedIn = true;
-              if (qOwned) {
-                createQueue();
-              }
             }
           });
         }
+        userProfilePlaceholder.innerHTML = userProfileTemplate();
       }
     }
 
@@ -478,7 +481,7 @@
 
     function addQIDtoURL(qid) {
       var hash = window.location.hash.substring(1);
-      hash += "&qid=" + qid;
+      hash += '&qid=' + qid;
       window.location.hash = hash;
     }
     /**
@@ -502,7 +505,7 @@
     }
 
     function playSong() {
-      if (queue.length == 0) { console.log("Queue is empty"); return; }
+      if (queue.length == 0) { console.log('Queue is empty'); return; }
       playPauseIcon.className = 'fa fa-pause-circle fa-med'
       $.ajax({
         type: 'PUT',
@@ -511,7 +514,7 @@
           'Authorization': 'Bearer ' + access_token
         },
         data: JSON.stringify({
-          "uris": [queue[0].uri]
+          'uris': [queue[0].uri]
         })
 
       }).done(function (data) {
@@ -519,14 +522,14 @@
       });
 
       if (qTimer) { qTimer.clear(); }
-      console.log("Length of current song: " + queue[0].duration_ms);
+      console.log('Length of current song: ' + queue[0].duration_ms);
       qTimer = new Timer(playNext, queue[0].duration_ms);
 
     }
 
     function resumeAndPause() {
-      if (playState == "EMPTY") {
-        alert("No song to resume. Add songs to the queue to play");
+      if (playState == 'EMPTY') {
+        alert('No song to resume. Add songs to the queue to play');
         return;
       }
 
@@ -566,8 +569,8 @@
       let duration = song.duration_ms;
       let mins = Math.floor(duration / 1000 / 60);
       let secs = Math.floor((duration - mins * 1000 * 60) / 1000);
-      secs = ("00" + secs).substr(-2, 2);
-      song.duration_string = mins + ":" + secs;
+      secs = ('00' + secs).substr(-2, 2);
+      song.duration_string = mins + ':' + secs;
     }
 
     function search() {
@@ -621,7 +624,7 @@
     function addSongToQueue(songIndex) {
       formatTime(searchResults[songIndex]);
       if (!queueKey) {
-        alert("Please subscribe to or create a queue");
+        alert('Please subscribe to or create a queue');
       }
       songInfo = searchResults[songIndex];
       connection.send(
@@ -639,15 +642,16 @@
     }
 
     function createQueue() {
-      if (!loggedIn) {
-        return false;
-      }
       console.log('sending create-queue event');
       connection.send(
-        JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
+        JSON.stringify({ event: 'create-queue', data: { queueKey } })
       );
-      return false;
+    }
 
+    function joinQueue() {
+      connection.send(
+        JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey } })
+      );
     }
 
 
