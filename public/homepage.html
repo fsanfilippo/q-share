@@ -55,7 +55,6 @@
     <script src='http://code.jquery.com/jquery-1.10.1.min.js'></script>
     <script>
         var params = getHashParams();
-        var queueKey;
         window.WebSocket = window.WebSocket || window.MozWebSocket;
         var connection = new WebSocket('ws://127.0.0.1:1337');
         var loggedIn = false;
@@ -74,7 +73,7 @@
         (function () {
 
             document.getElementById('join-queue-submit').addEventListener('click', joinQueue, false);
-            document.getElementById('create-queue-submit').addEventListener('click', createQueue, false);
+            document.getElementById('create-queue-submit').addEventListener('click', reserveQueue, false);
 
             /**
                 * Get the access token and refresh token from the URL
@@ -101,31 +100,35 @@
             // try to decode json (I assume that each message
             // from server is json)
             var response;
+            let data = message.data;
             try {
-                response = JSON.parse(message.data);
-                console.log(response);
+                response = JSON.parse(data.trim());
+                console.log(response.data.success);
+                if (response.data.success) {
+                    let selectedQueue = document.getElementById('create-queue-input').value;
+                    window.location.replace('/control-view' + window.location.hash + "&queueKey=" + selectedQueue + "&owner=true");
+                }
+                else {
+                    alert('That queue name is already being used');
+                }
 
             } catch (e) {
-                console.log('This doesn\'t look like a valid JSON: ',
-                    message.data);
+                console.log(e);
                 return;
             }
             // handle incoming message
         };
 
-        function createQueue() {
+        function reserveQueue() {
             if (!loggedIn) {
                 return false;
             }
             let selectedQueue = document.getElementById('create-queue-input').value;
-            console.log('created : ' + selectedQueue);
             if (!selectedQueue) return;
-            queueKey = selectedQueue;
-            qOwned = true;
+            console.log('created : ' + selectedQueue);
             connection.send(
-                JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
-            );
-            window.location.replace('/control-view' + window.location.hash + "&queueKey=" + queueKey + "&owner=true");
+                JSON.stringify({ event: 'reserve-queue', data: { queueKey: selectedQueue } })
+            )
             return false;
 
         }
@@ -133,9 +136,8 @@
             let selectedQueue = document.getElementById('join-queue-input').value;
             console.log('joined : ' + selectedQueue);
             if (!selectedQueue) return;
-            queueKey = selectedQueue;
             connection.send(
-                JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: queueKey } })
+                JSON.stringify({ event: 'subscribe-to-queue', data: { queueKey: selectedQueue } })
             );
             window.location.replace('/control-view');
             return false;

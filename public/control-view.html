@@ -230,6 +230,7 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script>
+
     var params = getHashParams();
     var devices;
     var queue = new Array();
@@ -244,11 +245,15 @@
     var loggedIn = false;
     var queueTitle;
 
+    console.log(params);
 
     if (!queueKey) {
       alert("No Queue Selected. Redricting to Homepage");
       setTimeout(() => { window.location.replace('/homepage'), 4000 })
     }
+
+    console.log(queueKey);
+    queueTitle = $("#q-name").text(queueKey);
 
     //Handlebar template variables
     var userProfileSource, userProfileTemplate, userProfilePlaceholder;
@@ -282,7 +287,7 @@
         queueDisplayTemplate = Handlebars.compile(queueDisplaySource),
         queueDisplayPlaceholder = document.getElementById('queue-display');
 
-      queueTitle = $("#q-name").text(queueKey);
+
 
       /**
        * Get the access token and refresh token from the URL
@@ -377,7 +382,9 @@
           queueKey = null;
           break;
         }
-
+        case ("error"): {
+          console.log(response.data);
+        }
       }
     };
 
@@ -414,6 +421,9 @@
               userProfilePlaceholder.innerHTML = userProfileTemplate(response);
               getDeviceList();
               loggedIn = true;
+              if (qOwned) {
+                createQueue();
+              }
             }
           });
         }
@@ -450,11 +460,10 @@
 
     }
 
-
     /**
-     * Obtains parameters from the hash of the URL
-     * @return Object
-     */
+       * Obtains parameters from the hash of the URL
+       * @return Object
+       */
     function getHashParams() {
       var hashParams = {};
       var e, r = /([^&;=]+)=?([^&;]*)/g,
@@ -464,6 +473,9 @@
       }
       return hashParams;
     }
+
+
+
     function addQIDtoURL(qid) {
       var hash = window.location.hash.substring(1);
       hash += "&qid=" + qid;
@@ -626,9 +638,18 @@
 
     }
 
-    function initInfoDisplay() {
+    function createQueue() {
+      if (!loggedIn) {
+        return false;
+      }
+      console.log('sending create-queue event');
+      connection.send(
+        JSON.stringify({ event: 'create-queue', data: { queueKey: queueKey } })
+      );
+      return false;
 
     }
+
 
   </script>
 </body>
